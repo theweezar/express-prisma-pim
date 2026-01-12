@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum SystemEntityType {
+  PRODUCT
+  CATALOG
+  CATEGORY
+}
+
+enum AttributeValueType {
+  STRING
+  NUMBER
+  BOOLEAN
+  ARRAY
+  DATE
+  DATETIME
+  SET_OF_STRINGS
+}
+
+model SystemEntity {
+  UUID             String           @id @default(uuid())
+  systemEntityType SystemEntityType
+  attributeValues  AttributeValue[]
+}
+
+model AttributeDefinition {
+  ID                 Int                @id @default(autoincrement())
+  key                String
+  label              String
+  systemEntityType   SystemEntityType
+  attributeValueType AttributeValueType
+  primary            Boolean            @default(false)
+  required           Boolean            @default(false)
+  unique             Boolean            @default(false)
+  minlength          Int?
+  maxlength          Int?
+  attributeValues    AttributeValue[]
+
+  @@unique([systemEntityType, key])
+}
+
+model AttributeValue {
+  UUID                String              @id @default(uuid())
+  value               String?
+  entityUUID          String
+  entity              SystemEntity        @relation(fields: [entityUUID], references: [UUID])
+  attributeID         Int
+  attributeDefinition AttributeDefinition @relation(fields: [attributeID], references: [ID])
+
+  @@unique([entityUUID, attributeID])
+}
+
+// model Product {
+//   id       Int       @id @default(autoincrement())
+//   baseId   Int?
+//   base     Product?  @relation("ProductVariants", fields: [baseId], references: [id])
+//   variants Product[] @relation("ProductVariants")
+// }

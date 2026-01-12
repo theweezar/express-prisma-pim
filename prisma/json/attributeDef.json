@@ -1,0 +1,102 @@
+[
+  {
+    "type": "PRODUCT",
+    "definition": [
+      {
+        "key": "pid",
+        "label": "Product ID",
+        "attributeValueType": "STRING",
+        "primary": true,
+        "required": true,
+        "unique": true
+      },
+      {
+        "key": "name",
+        "label": "Name",
+        "attributeValueType": "STRING",
+        "required": true,
+        "unique": false
+      },
+      {
+        "key": "active",
+        "label": "Active",
+        "attributeValueType": "BOOLEAN",
+        "required": false,
+        "unique": false
+      },
+      {
+        "key": "description",
+        "label": "Description",
+        "attributeValueType": "STRING",
+        "required": false,
+        "unique": false
+      },
+      {
+        "key": "sku",
+        "label": "SKU",
+        "attributeValueType": "STRING",
+        "required": false,
+        "unique": true
+      }
+    ]
+  },
+  {
+    "type": "CATALOG",
+    "definition": [
+      {
+        "key": "clid",
+        "label": "Catalog ID",
+        "attributeValueType": "STRING",
+        "required": true,
+        "unique": true
+      },
+      {
+        "key": "name",
+        "label": "Name",
+        "attributeValueType": "STRING",
+        "required": true,
+        "unique": false
+      },
+      {
+        "key": "description",
+        "label": "Description",
+        "attributeValueType": "STRING",
+        "required": false,
+        "unique": false
+      }
+    ]
+  },
+  {
+    "type": "CATEGORY",
+    "definition": [
+      {
+        "key": "cgid",
+        "label": "Category ID",
+        "attributeValueType": "STRING",
+        "required": true,
+        "unique": true
+      },
+      {
+        "key": "name",
+        "label": "Name",
+        "attributeValueType": "STRING",
+        "required": true,
+        "unique": false
+      },
+      {
+        "key": "active",
+        "label": "Active",
+        "attributeValueType": "BOOLEAN",
+        "required": false,
+        "unique": false
+      },
+      {
+        "key": "description",
+        "label": "Description",
+        "attributeValueType": "STRING",
+        "required": false,
+        "unique": false
+      }
+    ]
+  }
+]

@@ -1,0 +1,30 @@
+{
+  "name": "express-prisma-pim",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "watch": "tsx watch src/index.ts",
+    "dump": "npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql",
+    "reset": "npx prisma migrate reset",
+    "gen": "npx prisma generate",
+    "seed": "npx tsx seed.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-better-sqlite3": "^7.2.0",
+    "@prisma/adapter-pg": "7.2.0",
+    "@prisma/client": "^7.2.0",
+    "express": "5.2.1",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "5.0.6",
+    "@types/node": "^25.0.5",
+    "@types/pg": "^8.16.0",
+    "dotenv": "^17.2.3",
+    "prisma": "^7.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "5.9.3"
+  }
+}
