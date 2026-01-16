@@ -2,7 +2,8 @@ import { prisma } from '../../../prisma/connection';
 import {
   SystemEntity,
   SystemEntityType,
-  AttributeDefinition
+  AttributeDefinition,
+  AttributeGroupDefinition,
 } from '../../../prisma/generated/client';
 import {
   AttributeDefinitionCreateInput,
@@ -10,29 +11,15 @@ import {
 } from '../../../prisma/generated/models';
 import { validate } from './validation/validator';
 import _ from '../_';
+import SystemEntityRepository from './repository/SystemEntityRepository';
+import AttributeRepository from './repository/AttributeRepository';
+import AttributeGroupRepository from './repository/AttributeGroupRepository';
 
-async function queryAttributeDefinition(type: SystemEntityType) {
-  return await prisma.attributeDefinition.findMany({
-    where: {
-      systemEntityType: type
-    }
-  });
-}
-
-async function querySystemEntity(type: SystemEntityType, UUID: string) {
-  return await prisma.systemEntity.findUnique({
-    where: {
-      UUID,
-      systemEntityType: type
-    },
-    include: {
-      attributeValues: {
-        include: {
-          attributeDefinition: true,
-        },
-      },
-    },
-  });
+async function getSystemEntity(
+  type: SystemEntityType,
+  UUID: string
+) {
+  return await SystemEntityRepository.getSystemEntityByID(type, UUID);
 }
 
 async function createAttributeDefinition(input: AttributeDefinitionCreateInput) {
@@ -47,111 +34,27 @@ async function createAttributeDefinitions(input: AttributeDefinitionCreateInput[
   });
 }
 
-async function _createSystemEntity(
-  definitions: AttributeDefinition[],
-  type: SystemEntityType,
-  input: Map<string, string>
-) {
-  return await prisma.$transaction(async (prisma) => {
-    // Create the system entity
-    const systemEntity = await prisma.systemEntity.create({
-      data: {
-        systemEntityType: type,
-      },
-    });
-
-    // Merge input and template
-    const attributeValueData: AttributeValueCreateManyInput[] = [];
-
-    for (const definition of definitions) {
-      const inputValue = input.get(definition.key);
-
-      attributeValueData.push({
-        value: inputValue,
-        entityUUID: systemEntity.UUID,
-        attributeID: definition.ID,
-      });
-    }
-
-    // Create all attribute values
-    if (attributeValueData.length > 0) {
-      await prisma.attributeValue.createMany({
-        data: attributeValueData,
-      });
-    }
-  });
-}
-
 // createSystemEntity(SystemEntityType.PRODUCT, {pid: bla bla, name: vvv})
 async function createSystemEntity(
   type: SystemEntityType,
   input: Map<string, unknown>
 ) {
   // Get attribute definitions for this entity type (template)
-  const attributeDefinitions = await queryAttributeDefinition(type);
+  const attributeDefinitions = await AttributeRepository.getAttributeDefinitions(type);
 
   validate(attributeDefinitions, input);
 
   const inputTemplate = _.fillTemplateMap(_.mapToSet(attributeDefinitions, 'key'), input);
 
-  await _createSystemEntity(attributeDefinitions, type, inputTemplate);
+  await SystemEntityRepository.createSystemEntity(attributeDefinitions, type, inputTemplate);
 }
 
-async function querySystemEntityByPrimary(
+async function getSystemEntityByPrimary(
   type: SystemEntityType,
   primaryValue: string
 ): Promise<SystemEntity | null> {
-  const result = await prisma.attributeValue.findFirst({
-    where: {
-      entity: {
-        systemEntityType: type
-      },
-      attributeDefinition: {
-        primary: true
-      },
-      value: primaryValue
-    },
-    include: {
-      entity: {
-        include: {
-          attributeValues: {
-            include: {
-              attributeDefinition: true
-            }
-          }
-        }
-      }
-    }
-  })
+  const result = await AttributeRepository.getAttributeByTypeAndPrimary(type, primaryValue);
   return (result && result.entity) ? result.entity : null;
-}
-
-async function _updateSystemEntity(
-  entity: SystemEntity,
-  definitions: AttributeDefinition[],
-  input: Map<string, string>
-) {
-  return await prisma.$transaction(async (prisma) => {
-    for (const definition of definitions) {
-      const inputValue = input.get(definition.key);
-      await prisma.attributeValue.upsert({
-        where: {
-          entityUUID_attributeID: {
-            entityUUID: entity.UUID,
-            attributeID: definition.ID,
-          },
-        },
-        update: {
-          value: inputValue,
-        },
-        create: {
-          value: inputValue,
-          entityUUID: entity.UUID,
-          attributeID: definition.ID,
-        },
-      });
-    }
-  });
 }
 
 async function updateSystemEntityByPrimary(
@@ -160,37 +63,18 @@ async function updateSystemEntityByPrimary(
   input: Map<string, unknown>
 ) {
   // Check if system entity exists
-  const existingEntity = await querySystemEntityByPrimary(type, primaryValue);
+  const existingEntity = await getSystemEntityByPrimary(type, primaryValue);
   if (!existingEntity) {
     throw new Error(`System entity with primary ${primaryValue} not found`);
   }
 
-  const attributeDefinitions = await queryAttributeDefinition(type);
+  const attributeDefinitions = await AttributeRepository.getAttributeDefinitions(type);
 
   validate(attributeDefinitions, input);
 
   const inputTemplate = _.fillTemplateMap(_.mapToSet(attributeDefinitions, 'key'), input);
 
-  await _updateSystemEntity(existingEntity, attributeDefinitions, inputTemplate);
-}
-
-async function _deleteSystemEntity(entity: SystemEntity) {
-  await prisma.$transaction(async (prisma) => {
-    // First delete all attribute values associated with this entity
-    await prisma.attributeValue.deleteMany({
-      where: {
-        entityUUID: entity.UUID,
-      },
-    });
-
-    // Then delete the system entity itself
-    await prisma.systemEntity.delete({
-      where: {
-        UUID: entity.UUID,
-        systemEntityType: entity.systemEntityType,
-      },
-    });
-  });
+  await SystemEntityRepository.updateSystemEntity(existingEntity, attributeDefinitions, inputTemplate);
 }
 
 async function deleteSystemEntityByPrimary(
@@ -198,21 +82,89 @@ async function deleteSystemEntityByPrimary(
   primaryValue: string
 ) {
   // Check if system entity exists
-  const existingEntity = await querySystemEntityByPrimary(type, primaryValue);
+  const existingEntity = await getSystemEntityByPrimary(type, primaryValue);
   if (!existingEntity) {
     throw new Error(`System entity with primary ${primaryValue} not found`);
   }
 
-  await _deleteSystemEntity(existingEntity);
+  await SystemEntityRepository.deleteSystemEntity(existingEntity);
 }
 
+async function createAttributeGroupDefinition(
+  type: SystemEntityType,
+  key: string,
+  label: string
+): Promise<AttributeGroupDefinition> {
+  const groupsCount = await AttributeGroupRepository.countGroupsForEntityType(type);
+  return await AttributeGroupRepository.createGroup({
+    key,
+    label,
+    systemEntityType: type,
+    ordinal: groupsCount + 1
+  });
+}
+
+async function assignAttributeToGroup(
+  type: SystemEntityType,
+  groupID: string,
+  attributeID: string
+) {
+  const group = await AttributeGroupRepository.getGroupJoinAssignmentsByID(type, groupID);
+  if (!group) {
+    throw new Error(`Attribute group with ID ${groupID} not found`);
+  }
+
+  const attribute = await AttributeRepository.getAttributeDefinition(type, attributeID);
+  if (!attribute) {
+    throw new Error(`Attribute definition with ID ${attributeID} not found`);
+  }
+
+  const lastOrdinal = group.attributeGroupAssignments.length;
+
+  await AttributeGroupRepository.assignToGroup(
+    group,
+    attribute,
+    lastOrdinal + 1
+  );
+}
+
+async function unassignAttributeFromGroup(
+  type: SystemEntityType,
+  groupID: string,
+  attributeID: string
+) {
+  const group = await AttributeGroupRepository.getGroupJoinAssignmentsByID(type, groupID);
+  if (!group) {
+    throw new Error(`Attribute group with ID ${groupID} not found`);
+  }
+
+  const attribute = await AttributeRepository.getAttributeDefinition(type, attributeID);
+  if (!attribute) {
+    throw new Error(`Attribute definition with ID ${attributeID} not found`);
+  }
+
+  await AttributeGroupRepository.unassignFromGroup(
+    group,
+    attribute
+  );
+}
+
+async function getGroupsByEntityType(
+  type: SystemEntityType
+): Promise<AttributeGroupDefinition[]> {
+  return await AttributeGroupRepository.getGroupsByEntityType(type);
+}
 
 export default {
   createAttributeDefinition,
   createAttributeDefinitions,
-  querySystemEntity,
-  querySystemEntityByPrimary,
+  getSystemEntity,
+  getSystemEntityByPrimary,
   createSystemEntity,
   updateSystemEntityByPrimary,
-  deleteSystemEntityByPrimary
+  deleteSystemEntityByPrimary,
+  createAttributeGroupDefinition,
+  assignAttributeToGroup,
+  unassignAttributeFromGroup,
+  getGroupsByEntityType
 };

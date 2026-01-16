@@ -3,7 +3,7 @@
     "type": "PRODUCT",
     "definition": [
       {
-        "key": "pid",
+        "key": "productID",
         "label": "Product ID",
         "attributeValueType": "STRING",
         "primary": true,
@@ -11,7 +11,14 @@
         "unique": true
       },
       {
-        "key": "name",
+        "key": "ean",
+        "label": "EAN",
+        "attributeValueType": "STRING",
+        "required": false,
+        "unique": true
+      },
+      {
+        "key": "productName",
         "label": "Name",
         "attributeValueType": "STRING",
         "required": true,
@@ -37,65 +44,80 @@
         "attributeValueType": "STRING",
         "required": false,
         "unique": true
-      }
-    ]
-  },
-  {
-    "type": "CATALOG",
-    "definition": [
-      {
-        "key": "clid",
-        "label": "Catalog ID",
-        "attributeValueType": "STRING",
-        "required": true,
-        "unique": true
       },
       {
-        "key": "name",
-        "label": "Name",
+        "key": "material",
+        "label": "Material Composition",
         "attributeValueType": "STRING",
-        "required": true,
+        "required": false,
         "unique": false
       },
       {
-        "key": "description",
-        "label": "Description",
-        "attributeValueType": "STRING",
+        "key": "dimensionHeight",
+        "label": "Height",
+        "attributeValueType": "NUMBER",
+        "required": false,
+        "unique": false
+      },
+      {
+        "key": "dimensionWidth",
+        "label": "Width",
+        "attributeValueType": "NUMBER",
+        "required": false,
+        "unique": false
+      },
+      {
+        "key": "dimensionLength",
+        "label": "Length",
+        "attributeValueType": "NUMBER",
+        "required": false,
+        "unique": false
+      },
+      {
+        "key": "weight",
+        "label": "Weight (kg)",
+        "attributeValueType": "NUMBER",
+        "required": false,
+        "unique": false
+      },
+      {
+        "key": "volume",
+        "label": "Volume",
+        "attributeValueType": "NUMBER",
         "required": false,
         "unique": false
       }
-    ]
-  },
-  {
-    "type": "CATEGORY",
-    "definition": [
+    ],
+    "group": [
       {
-        "key": "cgid",
-        "label": "Category ID",
-        "attributeValueType": "STRING",
-        "required": true,
-        "unique": true
+        "key": "general",
+        "label": "General",
+        "assignments": [
+          "productID",
+          "productName",
+          "description",
+          "active"
+        ]
       },
       {
-        "key": "name",
-        "label": "Name",
-        "attributeValueType": "STRING",
-        "required": true,
-        "unique": false
+        "key": "intergration",
+        "label": "Intergration",
+        "assignments": [
+          "sku",
+          "ean"
+        ]
       },
       {
-        "key": "active",
-        "label": "Active",
-        "attributeValueType": "BOOLEAN",
-        "required": false,
-        "unique": false
-      },
-      {
-        "key": "description",
-        "label": "Description",
-        "attributeValueType": "STRING",
-        "required": false,
-        "unique": false
+        "key": "specifications",
+        "label": "Technical Specifications",
+        "assignments": [
+          "material",
+          "dimensionHeight",
+          "dimensionWidth",
+          "dimensionLength",
+          "weight",
+          "volume"
+        ]
       }
     ]
   }

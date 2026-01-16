@@ -13,19 +13,19 @@ app.get(`/`, (req, res) => {
 
 app.get(`/entity/:type/:uuid`, async (req, res) => {
   const { type, uuid } = req.params
-  const entity = await SystemEntityMgr.querySystemEntity(type as SystemEntityType, uuid)
+  const entity = await SystemEntityMgr.getSystemEntity(type as SystemEntityType, uuid)
   res.json(entity)
 })
 
 app.get(`/product/:uuid`, async (req, res) => {
   const { uuid } = req.params
-  const product = await SystemEntityMgr.querySystemEntity(SystemEntityType.PRODUCT, uuid)
+  const product = await SystemEntityMgr.getSystemEntity(SystemEntityType.PRODUCT, uuid)
   res.json(product)
 })
 
 app.get(`/primary/product/:value`, async (req, res) => {
   const { value } = req.params
-  const product = await SystemEntityMgr.querySystemEntityByPrimary(
+  const product = await SystemEntityMgr.getSystemEntityByPrimary(
     SystemEntityType.PRODUCT, value
   )
   res.json(product)

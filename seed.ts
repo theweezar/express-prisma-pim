@@ -3,10 +3,17 @@ import { SystemEntityType, AttributeValueType } from './prisma/generated/client'
 import { prisma } from './prisma/connection';
 import attributeDef from './prisma/json/attributeDef.json';
 import SystemEntityMgr from './src/pkg/system/SystemEntityMgr';
+import {
+  AttributeDefinitionCreateManyInput,
+  AttributeGroupDefinitionCreateManyInput
+} from './prisma/generated/models';
 
 async function createAllAttributeDefinition() {
-  const attributeDefinitionData = attributeDef.flatMap(entity =>
-    entity.definition.map(attr => ({
+  const attributeDefinitionData: AttributeDefinitionCreateManyInput[] = [];
+  const groupsData: AttributeGroupDefinitionCreateManyInput[] = [];
+
+  attributeDef.forEach(entity => {
+    const defs = entity.definition.map(attr => ({
       key: attr.key,
       label: attr.label,
       systemEntityType: entity.type as SystemEntityType,
@@ -14,11 +21,24 @@ async function createAllAttributeDefinition() {
       primary: !!(attr.primary),
       required: attr.required,
       unique: attr.unique,
-    }))
-  );
+    }));
+    attributeDefinitionData.push(...defs);
+
+    const groups = entity.group.map((g, idx) => ({
+      key: g.key,
+      label: g.label,
+      systemEntityType: entity.type as SystemEntityType,
+      ordinal: idx + 1,
+    }));
+    groupsData.push(...groups);
+  });
 
   await prisma.attributeDefinition.createMany({
     data: attributeDefinitionData,
+  });
+
+  await prisma.attributeGroupDefinition.createMany({
+    data: groupsData,
   });
 }
 
@@ -26,6 +46,8 @@ async function deleteAllTables() {
   await prisma.attributeValue.deleteMany();
   await prisma.attributeDefinition.deleteMany();
   await prisma.systemEntity.deleteMany();
+  await prisma.attributeGroupAssignment.deleteMany();
+  await prisma.attributeGroupDefinition.deleteMany();
 }
 
 async function main() {
@@ -37,8 +59,8 @@ async function main() {
   await SystemEntityMgr.createSystemEntity(
     SystemEntityType.PRODUCT,
     new Map([
-      ['pid', 'basic-2039'],
-      ['name', 'Basic Outfit'],
+      ['productID', 'basic-2039'],
+      ['productName', 'Basic Outfit'],
       ['active', 'true']
     ])
   )
@@ -46,23 +68,23 @@ async function main() {
   await SystemEntityMgr.createSystemEntity(
     SystemEntityType.PRODUCT,
     new Map([
-      ['pid', 'jean-1938'],
-      ['name', 'Jeans'],
+      ['productID', 'jean-1938'],
+      ['productName', 'Jeans'],
       ['active', 'true']
     ])
   )
 
-  await SystemEntityMgr.updateSystemEntityByPrimary(
-    SystemEntityType.PRODUCT,
-    'jean-1938',
-    new Map([
-      ['pid', 'jean-1938'],
-      ['name', 'Long Jeans'],
-      ['active', 'false']
-    ])
-  )
+  // await SystemEntityMgr.updateSystemEntityByPrimary(
+  //   SystemEntityType.PRODUCT,
+  //   'jean-1938',
+  //   new Map([
+  //     ['productID', 'jean-1938'],
+  //     ['name', 'Long Jeans'],
+  //     ['active', 'false']
+  //   ])
+  // )
 
-  await SystemEntityMgr.deleteSystemEntityByPrimary(SystemEntityType.PRODUCT, 'basic-2039')
+  // await SystemEntityMgr.deleteSystemEntityByPrimary(SystemEntityType.PRODUCT, 'basic-2039')
 
   console.log(`Seeding finished.`);
 }

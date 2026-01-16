@@ -30,19 +30,42 @@ model SystemEntity {
 }
 
 model AttributeDefinition {
-  ID                 Int                @id @default(autoincrement())
-  key                String
-  label              String
-  systemEntityType   SystemEntityType
-  attributeValueType AttributeValueType
-  primary            Boolean            @default(false)
-  required           Boolean            @default(false)
-  unique             Boolean            @default(false)
-  minlength          Int?
-  maxlength          Int?
-  attributeValues    AttributeValue[]
+  ID                        Int                        @id @default(autoincrement())
+  key                       String
+  label                     String
+  systemEntityType          SystemEntityType
+  attributeValueType        AttributeValueType
+  primary                   Boolean                    @default(false)
+  required                  Boolean                    @default(false)
+  unique                    Boolean                    @default(false)
+  minlength                 Int?
+  maxlength                 Int?
+  attributeValues           AttributeValue[]
+  attributeGroupAssignments AttributeGroupAssignment[]
 
   @@unique([systemEntityType, key])
+}
+
+model AttributeGroupDefinition {
+  ID                        Int                        @id @default(autoincrement())
+  key                       String
+  label                     String
+  systemEntityType          SystemEntityType
+  attributeGroupAssignments AttributeGroupAssignment[]
+  ordinal                   Int
+
+  @@unique([systemEntityType, key])
+}
+
+model AttributeGroupAssignment {
+  ID                         Int                       @id @default(autoincrement())
+  attributeDefinition        AttributeDefinition       @relation(fields: [attributeDefinitionID], references: [ID])
+  attributeDefinitionID      Int
+  attributeGroupDefinition   AttributeGroupDefinition? @relation(fields: [attributeGroupDefinitionID], references: [ID])
+  attributeGroupDefinitionID Int
+  ordinal                    Int
+
+  @@unique([attributeGroupDefinitionID, attributeDefinitionID])
 }
 
 model AttributeValue {
