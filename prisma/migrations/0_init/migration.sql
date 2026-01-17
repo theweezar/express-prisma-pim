@@ -1,6 +1,7 @@
 -- CreateTable
 CREATE TABLE "SystemEntity" (
-    "UUID" TEXT NOT NULL PRIMARY KEY,
+    "ID" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "UUID" TEXT NOT NULL,
     "systemEntityType" TEXT NOT NULL
 );
 
@@ -39,13 +40,17 @@ CREATE TABLE "AttributeGroupAssignment" (
 
 -- CreateTable
 CREATE TABLE "AttributeValue" (
-    "UUID" TEXT NOT NULL PRIMARY KEY,
+    "ID" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "UUID" TEXT NOT NULL,
     "value" TEXT,
-    "entityUUID" TEXT NOT NULL,
+    "entityID" INTEGER NOT NULL,
     "attributeID" INTEGER NOT NULL,
-    CONSTRAINT "AttributeValue_entityUUID_fkey" FOREIGN KEY ("entityUUID") REFERENCES "SystemEntity" ("UUID") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "AttributeValue_entityID_fkey" FOREIGN KEY ("entityID") REFERENCES "SystemEntity" ("ID") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "AttributeValue_attributeID_fkey" FOREIGN KEY ("attributeID") REFERENCES "AttributeDefinition" ("ID") ON DELETE RESTRICT ON UPDATE CASCADE
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "SystemEntity_UUID_key" ON "SystemEntity"("UUID");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "AttributeDefinition_systemEntityType_key_key" ON "AttributeDefinition"("systemEntityType", "key");
@@ -57,5 +62,8 @@ CREATE UNIQUE INDEX "AttributeGroupDefinition_systemEntityType_key_key" ON "Attr
 CREATE UNIQUE INDEX "AttributeGroupAssignment_attributeGroupDefinitionID_attributeDefinitionID_key" ON "AttributeGroupAssignment"("attributeGroupDefinitionID", "attributeDefinitionID");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "AttributeValue_entityUUID_attributeID_key" ON "AttributeValue"("entityUUID", "attributeID");
+CREATE UNIQUE INDEX "AttributeValue_UUID_key" ON "AttributeValue"("UUID");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AttributeValue_entityID_attributeID_key" ON "AttributeValue"("entityID", "attributeID");
 

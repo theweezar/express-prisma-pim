@@ -16,6 +16,7 @@ type AttributeValue = {
 }
 
 export type EntityDetail = {
+  ID: number
   UUID: string
   systemEntityType: SystemEntityType
   attribute: Record<string, AttributeValue>

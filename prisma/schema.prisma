@@ -24,7 +24,8 @@ enum AttributeValueType {
 }
 
 model SystemEntity {
-  UUID             String           @id @default(uuid())
+  ID               Int              @id @default(autoincrement())
+  UUID             String           @unique @default(uuid())
   systemEntityType SystemEntityType
   attributeValues  AttributeValue[]
 }
@@ -69,19 +70,13 @@ model AttributeGroupAssignment {
 }
 
 model AttributeValue {
-  UUID                String              @id @default(uuid())
+  ID                  Int                 @id @default(autoincrement())
+  UUID                String              @unique @default(uuid())
   value               String?
-  entityUUID          String
-  entity              SystemEntity        @relation(fields: [entityUUID], references: [UUID])
+  entityID            Int
+  entity              SystemEntity        @relation(fields: [entityID], references: [ID])
   attributeID         Int
   attributeDefinition AttributeDefinition @relation(fields: [attributeID], references: [ID])
 
-  @@unique([entityUUID, attributeID])
+  @@unique([entityID, attributeID])
 }
-
-// model Product {
-//   id       Int       @id @default(autoincrement())
-//   baseId   Int?
-//   base     Product?  @relation("ProductVariants", fields: [baseId], references: [id])
-//   variants Product[] @relation("ProductVariants")
-// }

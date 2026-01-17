@@ -1,7 +1,8 @@
 import 'dotenv/config'
 import express from 'express'
-import SystemEntityMgr from './pkg/system/SystemEntityMgr'
+import SystemEntityMgr from './pkg/system/systemEntityMgr'
 import { SystemEntityType } from '../prisma/generated/enums'
+import { toEntityDetail, toEntityOnForm } from './pkg/system/models/adapter'
 
 const app = express()
 
@@ -11,24 +12,17 @@ app.get(`/`, (req, res) => {
   res.send('Hello world!')
 })
 
-app.get(`/entity/:type/:uuid`, async (req, res) => {
-  const { type, uuid } = req.params
-  const entity = await SystemEntityMgr.getSystemEntity(type as SystemEntityType, uuid)
-  res.json(entity)
-})
-
-app.get(`/product/:uuid`, async (req, res) => {
-  const { uuid } = req.params
-  const product = await SystemEntityMgr.getSystemEntity(SystemEntityType.PRODUCT, uuid)
-  res.json(product)
-})
-
-app.get(`/primary/product/:value`, async (req, res) => {
+app.get(`/product/:value`, async (req, res) => {
   const { value } = req.params
-  const product = await SystemEntityMgr.getSystemEntityByPrimary(
-    SystemEntityType.PRODUCT, value
-  )
-  res.json(product)
+  const product = await SystemEntityMgr.getSystemEntityByPrimary(SystemEntityType.PRODUCT, value)
+  const groups = await SystemEntityMgr.getGroupsJoinAssignmentsByEntityType(SystemEntityType.PRODUCT)
+  if (product) {
+    // const productJson = toEntityDetail(product);
+    const productJson = toEntityOnForm(product, groups);
+    res.json(productJson)
+  } else {
+    res.json({ notFound: true })
+  }
 })
 
 const server = app.listen(3000, () =>

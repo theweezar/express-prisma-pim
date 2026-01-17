@@ -1,7 +1,7 @@
 import {
   AttributeGroupDefinitionJoinAssignments,
   SystemEntityJoinAttributes
-} from '../repository/types';
+} from '../dto/types';
 import {
   EntityDetail,
   EntityOnForm
@@ -26,6 +26,7 @@ export function toEntityDetail(
   }, {} as Record<string, any>);
 
   return {
+    ID: entity.ID,
     UUID: entity.UUID,
     systemEntityType: entity.systemEntityType,
     attribute

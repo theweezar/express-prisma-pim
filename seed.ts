@@ -1,16 +1,29 @@
 import 'dotenv/config';
-import { SystemEntityType, AttributeValueType } from './prisma/generated/client';
+import {
+  SystemEntityType,
+  AttributeValueType,
+  AttributeGroupDefinition,
+  AttributeDefinition
+} from './prisma/generated/client';
 import { prisma } from './prisma/connection';
 import attributeDef from './prisma/json/attributeDef.json';
-import SystemEntityMgr from './src/pkg/system/SystemEntityMgr';
+import SystemEntityMgr from './src/pkg/system/systemEntityMgr';
 import {
   AttributeDefinitionCreateManyInput,
   AttributeGroupDefinitionCreateManyInput
 } from './prisma/generated/models';
 
+import systemEntityDTO from './src/pkg/system/dto/systemEntity';
+import attributeValueDTO from './src/pkg/system/dto/attributeValue';
+import attributeDefinitionDTO from './src/pkg/system/dto/attributeDefinition';
+import attributeGroupDefinitionDTO from './src/pkg/system/dto/attributeGroupDefinition';
+import attributeGroupAssignmentDTO from './src/pkg/system/dto/attributeGroupAssignment';
+import _ from './src/pkg/_';
+
 async function createAllAttributeDefinition() {
   const attributeDefinitionData: AttributeDefinitionCreateManyInput[] = [];
   const groupsData: AttributeGroupDefinitionCreateManyInput[] = [];
+  const assignmentData: { gkey: string, akey: string, ord: number }[] = [];
 
   attributeDef.forEach(entity => {
     const defs = entity.definition.map(attr => ({
@@ -24,30 +37,51 @@ async function createAllAttributeDefinition() {
     }));
     attributeDefinitionData.push(...defs);
 
-    const groups = entity.group.map((g, idx) => ({
+    const groups = entity.group.map((g, i) => ({
       key: g.key,
       label: g.label,
       systemEntityType: entity.type as SystemEntityType,
-      ordinal: idx + 1,
+      ordinal: i + 1,
     }));
     groupsData.push(...groups);
+
+    assignmentData.push(
+      ...entity.group.flatMap((g, i) => {
+        return g.assignments.map((aga, j) => ({
+          gkey: g.key,
+          akey: aga,
+          ord: j + 1
+        }));
+      })
+    )
   });
 
-  await prisma.attributeDefinition.createMany({
-    data: attributeDefinitionData,
-  });
+  const attrDefs = await attributeDefinitionDTO.createManyAndReturn(attributeDefinitionData);
+  const attrGroupDefs = await attributeGroupDefinitionDTO.createManyAndReturn(groupsData);
 
-  await prisma.attributeGroupDefinition.createMany({
-    data: groupsData,
-  });
+  const attrDefMap = _.arrayToMap(attrDefs, "key");
+  const attrGroupDefMap = _.arrayToMap(attrGroupDefs, "key");
+
+  const agaInput = assignmentData.map(aga => {
+    const gDef = attrGroupDefMap.get(aga.gkey);
+    const aDef = attrDefMap.get(aga.akey);
+    if (gDef && aDef) return {
+      groupDef: gDef,
+      attrDef: aDef,
+      ordinal: aga.ord
+    };
+    return null;
+  }).filter(inp => inp !== null);
+
+  await attributeGroupAssignmentDTO.createMany(agaInput);
 }
 
 async function deleteAllTables() {
   await prisma.attributeValue.deleteMany();
-  await prisma.attributeDefinition.deleteMany();
   await prisma.systemEntity.deleteMany();
   await prisma.attributeGroupAssignment.deleteMany();
   await prisma.attributeGroupDefinition.deleteMany();
+  await prisma.attributeDefinition.deleteMany();
 }
 
 async function main() {
@@ -59,7 +93,7 @@ async function main() {
   await SystemEntityMgr.createSystemEntity(
     SystemEntityType.PRODUCT,
     new Map([
-      ['productID', 'basic-2039'],
+      ['productID', 'basic-0001'],
       ['productName', 'Basic Outfit'],
       ['active', 'true']
     ])
@@ -68,21 +102,26 @@ async function main() {
   await SystemEntityMgr.createSystemEntity(
     SystemEntityType.PRODUCT,
     new Map([
-      ['productID', 'jean-1938'],
-      ['productName', 'Jeans'],
-      ['active', 'true']
+      ['productID', 'tech-sling-099'],
+      ['productName', 'Pro-Travel Sling Bag'],
+      ['material', '70% NYLON + 30% POLYESTER'],
+      ['dimensionHeight', '27.0'],
+      ['dimensionWidth', '18.0'],
+      ['dimensionLength', '6.5'],
+      ['weight', '0.32'],
+      ['active', 'true'],
     ])
   )
 
-  // await SystemEntityMgr.updateSystemEntityByPrimary(
-  //   SystemEntityType.PRODUCT,
-  //   'jean-1938',
-  //   new Map([
-  //     ['productID', 'jean-1938'],
-  //     ['name', 'Long Jeans'],
-  //     ['active', 'false']
-  //   ])
-  // )
+  await SystemEntityMgr.createSystemEntity(
+    SystemEntityType.PRODUCT,
+    new Map([
+      ['productID', 'cargo-pants-v2'],
+      ['productName', 'Utility Cargo Pants'],
+      ['ean', '8801234567890'],
+      ['active', 'false']
+    ])
+  );
 
   // await SystemEntityMgr.deleteSystemEntityByPrimary(SystemEntityType.PRODUCT, 'basic-2039')
 

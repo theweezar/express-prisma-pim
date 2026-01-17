@@ -55,10 +55,18 @@ function mapToSet<T, K extends keyof T>(
   return new Set(collection.map(item => item[key]).filter(Boolean));
 }
 
+function arrayToMap<T, K extends keyof T>(
+  collection: ReadonlyArray<T>,
+  key: K
+): Map<T[K], T> {
+  return new Map<T[K], T>(collection.map(item => [item[key], item]));
+}
+
 const _ = {
   fillTemplateMap,
   hasValue,
-  mapToSet
+  mapToSet,
+  arrayToMap
 };
 
 export default _;

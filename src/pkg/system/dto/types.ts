@@ -22,6 +22,12 @@ export type AttributeGroupDefinitionJoinAssignments = AttributeGroupDefinition &
   )[]
 };
 
+export type AttributeGroupAssignmentCreateManyInput = {
+  groupDef: AttributeGroupDefinition
+  attrDef: AttributeDefinition
+  ordinal: number
+};
+
 export type AttributeValueJoinDefinition = AttributeValue & {
   attributeDefinition: AttributeDefinition;
 };
@@ -35,10 +41,4 @@ export type AttributeByTypeAndPrimary = AttributeValue & {
   entity: SystemEntity & {
     attributeValues: AttributeValueJoinDefinition[];
   };
-};
-
-export type AttributeGroupWithDefinitions = AttributeGroupDefinition & {
-  attributeGroupAssignments: (AttributeGroupAssignment & {
-    attributeDefinition: AttributeDefinition;
-  })[];
 };

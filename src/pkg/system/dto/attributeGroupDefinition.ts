@@ -1,20 +1,38 @@
-import { prisma } from '../../../../prisma/connection';
+import { DTOPrismaClient, prisma } from '../../../../prisma/connection';
 import {
-  AttributeDefinition,
   AttributeGroupDefinition,
-  AttributeGroupAssignment,
   SystemEntityType
 } from '../../../../prisma/generated/client';
 import {
   AttributeGroupDefinitionCreateInput,
+  AttributeGroupDefinitionCreateManyInput,
 } from '../../../../prisma/generated/models';
 import { AttributeGroupDefinitionJoinAssignments } from './types';
 
-async function createGroup(
+async function create(
+  pc: DTOPrismaClient,
   group: AttributeGroupDefinitionCreateInput
 ): Promise<AttributeGroupDefinition> {
-  return await prisma.attributeGroupDefinition.create({
+  return await pc.attributeGroupDefinition.create({
     data: group
+  });
+}
+
+async function createMany(
+  pc: DTOPrismaClient,
+  groups: AttributeGroupDefinitionCreateManyInput[]
+) {
+  return await pc.attributeGroupDefinition.createMany({
+    data: groups
+  });
+}
+
+async function createManyAndReturn(
+  pc: DTOPrismaClient,
+  groups: AttributeGroupDefinitionCreateManyInput[]
+): Promise<AttributeGroupDefinition[]> {
+  return await pc.attributeGroupDefinition.createManyAndReturn({
+    data: groups
   });
 }
 
@@ -47,8 +65,14 @@ async function getGroupsJoinAssignmentsByEntityType(
       attributeGroupAssignments: {
         include: {
           attributeDefinition: true
+        },
+        orderBy: {
+          ordinal: "asc"
         }
       }
+    },
+    orderBy: {
+      ordinal: "asc"
     }
   });
 }
@@ -82,55 +106,32 @@ async function getGroupJoinAssignmentsByID(
   });
 }
 
-async function assignToGroup(
-  group: AttributeGroupDefinition,
-  attribute: AttributeDefinition,
-  ordinal: number
-): Promise<AttributeGroupAssignment> {
-  return await prisma.attributeGroupAssignment.create({
-    data: {
-      attributeGroupDefinitionID: group.ID,
-      attributeDefinitionID: attribute.ID,
-      ordinal: ordinal
-    }
-  });
-}
-
-async function unassignFromGroup(
-  group: AttributeGroupDefinition,
-  attribute: AttributeDefinition,
-) {
-  await prisma.attributeGroupAssignment.deleteMany({
-    where: {
-      attributeGroupDefinitionID: group.ID,
-      attributeDefinitionID: attribute.ID,
-    }
-  });
-}
-
-async function getLastOrdinalInGroup(
-  group: AttributeGroupDefinition
-): Promise<number> {
-  const lastAssignment = await prisma.attributeGroupAssignment.findFirst({
-    where: {
-      attributeGroupDefinitionID: group.ID
-    },
-    orderBy: {
-      ordinal: 'desc'
-    }
-  });
-
-  return lastAssignment ? lastAssignment.ordinal : -1;
-}
-
 export default {
-  createGroup,
   getGroupByID,
   getGroupJoinAssignmentsByID,
   getGroupsJoinAssignmentsByEntityType,
   getGroupsByEntityType,
   countGroupsForEntityType,
-  assignToGroup,
-  unassignFromGroup,
-  getLastOrdinalInGroup
+  create: async (group: AttributeGroupDefinitionCreateInput): Promise<AttributeGroupDefinition> => {
+    return await create(prisma, group);
+  },
+  createMany: async (groups: AttributeGroupDefinitionCreateManyInput[]) => {
+    return await createMany(prisma, groups);
+  },
+  createManyAndReturn: async (groups: AttributeGroupDefinitionCreateManyInput[]): Promise<AttributeGroupDefinition[]> => {
+    return await createManyAndReturn(prisma, groups);
+  },
+  wrapTx: (tx: DTOPrismaClient) => {
+    return {
+      create: async (group: AttributeGroupDefinitionCreateInput): Promise<AttributeGroupDefinition> => {
+        return await create(tx, group);
+      },
+      createMany: async (groups: AttributeGroupDefinitionCreateManyInput[]) => {
+        return await createMany(tx, groups);
+      },
+      createManyAndReturn: async (groups: AttributeGroupDefinitionCreateManyInput[]): Promise<AttributeGroupDefinition[]> => {
+        return await createManyAndReturn(tx, groups);
+      }
+    }
+  }
 }
