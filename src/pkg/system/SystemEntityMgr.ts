@@ -78,21 +78,13 @@ async function getSystemEntity(
   return await systemEntityDTO.getSystemEntityByID(type, ID);
 }
 
-async function createAttributeDefinition(input: AttributeDefinitionCreateInput) {
-  return await attributeDefinitionDTO.create(input);
-}
-
-async function createAttributeDefinitions(input: AttributeDefinitionCreateInput[]) {
-  return await attributeDefinitionDTO.createMany(input);
-}
-
 async function createSystemEntity(
   type: SystemEntityType,
   input: Map<string, unknown>
 ) {
   const attributeDefinitions = await attributeValueDTO.getAttributeDefinitions(type);
-  validate(attributeDefinitions, input);
-  const inputTemplate = _.fillTemplateMap(_.mapToSet(attributeDefinitions, 'key'), input);
+  await validate(attributeDefinitions, input);
+  const inputTemplate = _.projectToTemplate(_.uniqueValuesOf(attributeDefinitions, 'key'), input);
   await SystemEntityTX.createSystemEntity(attributeDefinitions, type, inputTemplate);
 }
 
@@ -115,9 +107,9 @@ async function updateSystemEntityByPrimary(
   }
 
   const attributeDefinitions = await attributeValueDTO.getAttributeDefinitions(type);
-  validate(attributeDefinitions, input);
-  const inputTemplate = _.fillTemplateMap(_.mapToSet(attributeDefinitions, 'key'), input);
-  // await SystemEntityTX.updateSystemEntity(existingEntity, attributeDefinitions, inputTemplate);
+  await validate(attributeDefinitions, input);
+  const inputTemplate = _.projectToTemplate(_.uniqueValuesOf(attributeDefinitions, 'key'), input);
+  await SystemEntityTX.updateSystemEntity(existingEntity, attributeDefinitions, inputTemplate);
 }
 
 async function deleteSystemEntityByPrimary(
@@ -130,59 +122,7 @@ async function deleteSystemEntityByPrimary(
     throw new Error(`System entity with primary ${primaryValue} not found`);
   }
 
-  // await SystemEntityTX.deleteSystemEntity(existingEntity);
-}
-
-async function createAttributeGroupDefinition(
-  type: SystemEntityType,
-  key: string,
-  label: string
-): Promise<AttributeGroupDefinition> {
-  const groupsCount = await attributeGroupDefinitionDTO.countGroupsForEntityType(type);
-  return await attributeGroupDefinitionDTO.create({
-    key,
-    label,
-    systemEntityType: type,
-    ordinal: groupsCount + 1
-  });
-}
-
-async function assignAttributeToGroup(
-  type: SystemEntityType,
-  groupID: string,
-  attributeID: string
-) {
-  const group = await attributeGroupDefinitionDTO.getGroupJoinAssignmentsByID(type, groupID);
-  if (!group) {
-    throw new Error(`Attribute group with ID ${groupID} not found`);
-  }
-
-  const attribute = await attributeValueDTO.getAttributeDefinition(type, attributeID);
-  if (!attribute) {
-    throw new Error(`Attribute definition with ID ${attributeID} not found`);
-  }
-
-  const lastOrdinal = group.attributeGroupAssignments.length;
-
-  await attributeGroupAssignmentDTO.create(group, attribute, lastOrdinal + 1);
-}
-
-async function unassignAttributeFromGroup(
-  type: SystemEntityType,
-  groupID: string,
-  attributeID: string
-) {
-  const group = await attributeGroupDefinitionDTO.getGroupJoinAssignmentsByID(type, groupID);
-  if (!group) {
-    throw new Error(`Attribute group with ID ${groupID} not found`);
-  }
-
-  const attribute = await attributeValueDTO.getAttributeDefinition(type, attributeID);
-  if (!attribute) {
-    throw new Error(`Attribute definition with ID ${attributeID} not found`);
-  }
-
-  await attributeGroupAssignmentDTO.remove(group, attribute);
+  await SystemEntityTX.deleteSystemEntity(existingEntity);
 }
 
 async function getGroupsByEntityType(
@@ -205,16 +145,11 @@ export default {
   getGroupsJoinAssignmentsByEntityType,
 
   // Create
-  createAttributeDefinition,
-  createAttributeDefinitions,
   createSystemEntity,
-  createAttributeGroupDefinition,
 
   // Update
   updateSystemEntityByPrimary,
 
   // Delete
-  deleteSystemEntityByPrimary,
-  assignAttributeToGroup,
-  unassignAttributeFromGroup,
+  deleteSystemEntityByPrimary
 };

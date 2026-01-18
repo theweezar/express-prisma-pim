@@ -35,6 +35,20 @@ async function createMany(
   });
 }
 
+async function createManyAndReturn(
+  pc: DTOPrismaClient,
+  data: AttributeGroupAssignmentCreateManyInput[]
+) {
+  const _data = data.map(obj => ({
+    attributeGroupDefinitionID: obj.groupDef.ID,
+    attributeDefinitionID: obj.attrDef.ID,
+    ordinal: obj.ordinal
+  }));
+  return await pc.attributeGroupAssignment.createManyAndReturn({
+    data: _data
+  });
+}
+
 async function remove(
   pc: DTOPrismaClient,
   groupDef: AttributeGroupDefinition,
@@ -61,6 +75,11 @@ export default {
   ) => {
     return await createMany(prisma, data);
   },
+  createManyAndReturn: async (
+    data: AttributeGroupAssignmentCreateManyInput[]
+  ) => {
+    return await createManyAndReturn(prisma, data);
+  },
   remove: async (
     groupDef: AttributeGroupDefinition,
     attrDef: AttributeDefinition
@@ -80,6 +99,11 @@ export default {
         data: AttributeGroupAssignmentCreateManyInput[]
       ) => {
         return await createMany(tx, data);
+      },
+      createManyAndReturn: async (
+        data: AttributeGroupAssignmentCreateManyInput[]
+      ) => {
+        return await createManyAndReturn(tx, data);
       },
       remove: async (
         groupDef: AttributeGroupDefinition,

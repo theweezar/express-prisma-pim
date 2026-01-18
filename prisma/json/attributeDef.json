@@ -8,84 +8,108 @@
         "attributeValueType": "STRING",
         "primary": true,
         "required": true,
-        "unique": true
+        "unique": true,
+        "minlength": null,
+        "maxlength": null
       },
       {
         "key": "ean",
         "label": "EAN",
         "attributeValueType": "STRING",
         "required": false,
-        "unique": true
+        "unique": true,
+        "minlength": null,
+        "maxlength": null
       },
       {
         "key": "productName",
         "label": "Name",
         "attributeValueType": "STRING",
         "required": true,
-        "unique": false
+        "unique": false,
+        "minlength": null,
+        "maxlength": null
       },
       {
         "key": "active",
         "label": "Active",
         "attributeValueType": "BOOLEAN",
         "required": false,
-        "unique": false
+        "unique": false,
+        "minlength": null,
+        "maxlength": null
       },
       {
         "key": "description",
         "label": "Description",
         "attributeValueType": "STRING",
         "required": false,
-        "unique": false
+        "unique": false,
+        "minlength": null,
+        "maxlength": null
       },
       {
         "key": "sku",
         "label": "SKU",
         "attributeValueType": "STRING",
         "required": false,
-        "unique": true
+        "unique": true,
+        "minlength": null,
+        "maxlength": null
       },
       {
         "key": "material",
         "label": "Material Composition",
         "attributeValueType": "STRING",
         "required": false,
-        "unique": false
+        "unique": false,
+        "minlength": null,
+        "maxlength": null
       },
       {
         "key": "dimensionHeight",
         "label": "Height",
         "attributeValueType": "NUMBER",
         "required": false,
-        "unique": false
+        "unique": false,
+        "minlength": null,
+        "maxlength": null
       },
       {
         "key": "dimensionWidth",
         "label": "Width",
         "attributeValueType": "NUMBER",
         "required": false,
-        "unique": false
+        "unique": false,
+        "minlength": null,
+        "maxlength": null
       },
       {
         "key": "dimensionLength",
         "label": "Length",
         "attributeValueType": "NUMBER",
         "required": false,
-        "unique": false
+        "unique": false,
+        "minlength": null,
+        "maxlength": null
       },
       {
         "key": "weight",
         "label": "Weight (kg)",
         "attributeValueType": "NUMBER",
         "required": false,
-        "unique": false
+        "unique": false,
+        "minlength": null,
+        "maxlength": null
       },
       {
         "key": "volume",
         "label": "Volume",
         "attributeValueType": "NUMBER",
         "required": false,
-        "unique": false
+        "unique": false,
+        "minlength": null,
+        "maxlength": null
       }
     ],
     "group": [

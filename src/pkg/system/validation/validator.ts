@@ -1,62 +1,55 @@
 import { AttributeDefinition } from "../../../../prisma/generated/client";
+import { NA_AttributeDefinition } from "../dto/types";
+import { Validation } from "./types";
+import * as rule from "./rule";
+import _ from "../../_";
 
-function validateInputType(input: unknown): asserts input is Map<string, unknown> {
-  if (!(input instanceof Map)) throw new Error('Input must be a Map<string, unknown>')
-}
-
-function _validateAttributeDefinition(
+export async function _validateValueFollowDefinition(
   definition: AttributeDefinition,
   input: unknown
-) {
+): Promise<string | Error> {
   const inputValue = String(input).trim();
+  const validations: Validation[] = [
+    rule.notFound,
+    rule.required,
+    rule.mustBeBoolean,
+    rule.mustBeNumber,
+    rule.mustBeArray,
+    rule.mustBeDatetime,
+    rule.minLength,
+    rule.maxLength,
+    rule.primaryUnique
+  ];
 
-  // Validate required fields
-  if (definition.required && (!inputValue || inputValue === '')) {
-    throw new Error(
-      `Attribute '${definition.key}' (${definition.label}) is required`
-    );
-  }
-
-  // TODO: Move Validate uniqueness to another function, use find ...or...
-  // if (definition.unique && inputValue) { }
-
-  // Validate length constraints
-  if (inputValue) {
-    if (definition.minlength && inputValue.length < definition.minlength) {
-      throw new Error(
-        `Attribute '${definition.key}' must be at least ${definition.minlength} characters.`
-      );
+  for (const initValidation of validations) {
+    const validation = initValidation(definition, inputValue);
+    const result = await validation.validate();
+    if (!result) {
+      const failure = validation.fail();
+      return new Error(failure.message);
     }
-    if (definition.maxlength && inputValue.length > definition.maxlength) {
-      throw new Error(
-        `Attribute '${definition.key}' must be at most ${definition.maxlength} characters.`
-      );
-    }
-  } else if (definition.minlength && definition.minlength > 0) {
-    throw new Error(
-      `Attribute '${definition.key}' must be at least ${definition.minlength} characters.`
-    );
   }
 
   return inputValue;
 }
 
-function validateEntityDefinition(
+export async function validate(
   definitions: AttributeDefinition[],
-  input: Map<string, unknown>
-) {
-  const defMap = new Map(definitions.map(d => [d.key, d]));
+  input: Map<string, unknown>,
+  throwError: boolean = true
+): Promise<true | Error> {
+  const defMap = _.indexBy(definitions, 'key');
   for (const [code, value] of input.entries()) {
-    const def = defMap.get(code);
-    if (!def) throw new Error(`Unknown attribute: ${code}`);
-    _validateAttributeDefinition(def, value)
+    let def = defMap.get(code);
+    if (!def) {
+      def = NA_AttributeDefinition;
+      def.key = code;
+    }
+    const result = await _validateValueFollowDefinition(def, value);
+    if (result instanceof Error) {
+      if (throwError) throw result;
+      else return result;
+    }
   }
-}
-
-export function validate(
-  definitions: AttributeDefinition[],
-  input: Map<string, unknown>
-) {
-  validateInputType(input);
-  validateEntityDefinition(definitions, input);
+  return true;
 }

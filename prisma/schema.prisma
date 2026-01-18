@@ -8,19 +8,21 @@ datasource db {
 }
 
 enum SystemEntityType {
+  NA
   PRODUCT
   CATALOG
   CATEGORY
 }
 
 enum AttributeValueType {
+  NA
   STRING
   NUMBER
   BOOLEAN
   ARRAY
   DATE
   DATETIME
-  SET_OF_STRINGS
+  // SET_OF_STRINGS
 }
 
 model SystemEntity {

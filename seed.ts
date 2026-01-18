@@ -1,29 +1,22 @@
-import 'dotenv/config';
 import {
   SystemEntityType,
-  AttributeValueType,
-  AttributeGroupDefinition,
-  AttributeDefinition
+  AttributeValueType
 } from './prisma/generated/client';
 import { prisma } from './prisma/connection';
 import attributeDef from './prisma/json/attributeDef.json';
-import SystemEntityMgr from './src/pkg/system/systemEntityMgr';
+import systemEntityMgr from './src/pkg/system/systemEntityMgr';
+import attributeMgr from './src/pkg/system/attributeMgr';
 import {
   AttributeDefinitionCreateManyInput,
   AttributeGroupDefinitionCreateManyInput
 } from './prisma/generated/models';
 
-import systemEntityDTO from './src/pkg/system/dto/systemEntity';
-import attributeValueDTO from './src/pkg/system/dto/attributeValue';
-import attributeDefinitionDTO from './src/pkg/system/dto/attributeDefinition';
-import attributeGroupDefinitionDTO from './src/pkg/system/dto/attributeGroupDefinition';
-import attributeGroupAssignmentDTO from './src/pkg/system/dto/attributeGroupAssignment';
 import _ from './src/pkg/_';
 
 async function createAllAttributeDefinition() {
-  const attributeDefinitionData: AttributeDefinitionCreateManyInput[] = [];
-  const groupsData: AttributeGroupDefinitionCreateManyInput[] = [];
-  const assignmentData: { gkey: string, akey: string, ord: number }[] = [];
+  const mockAttrDefs: AttributeDefinitionCreateManyInput[] = [];
+  const mockGroupDefs: AttributeGroupDefinitionCreateManyInput[] = [];
+  const assignments: { gkey: string, akey: string, ord: number }[] = [];
 
   attributeDef.forEach(entity => {
     const defs = entity.definition.map(attr => ({
@@ -35,7 +28,7 @@ async function createAllAttributeDefinition() {
       required: attr.required,
       unique: attr.unique,
     }));
-    attributeDefinitionData.push(...defs);
+    mockAttrDefs.push(...defs);
 
     const groups = entity.group.map((g, i) => ({
       key: g.key,
@@ -43,9 +36,9 @@ async function createAllAttributeDefinition() {
       systemEntityType: entity.type as SystemEntityType,
       ordinal: i + 1,
     }));
-    groupsData.push(...groups);
+    mockGroupDefs.push(...groups);
 
-    assignmentData.push(
+    assignments.push(
       ...entity.group.flatMap((g, i) => {
         return g.assignments.map((aga, j) => ({
           gkey: g.key,
@@ -56,13 +49,13 @@ async function createAllAttributeDefinition() {
     )
   });
 
-  const attrDefs = await attributeDefinitionDTO.createManyAndReturn(attributeDefinitionData);
-  const attrGroupDefs = await attributeGroupDefinitionDTO.createManyAndReturn(groupsData);
+  const attrDefs = await attributeMgr.createAttributeDefinitions(mockAttrDefs);
+  const attrGroupDefs = await attributeMgr.createAttributeGroupDefinitions(mockGroupDefs);
 
-  const attrDefMap = _.arrayToMap(attrDefs, "key");
-  const attrGroupDefMap = _.arrayToMap(attrGroupDefs, "key");
+  const attrDefMap = _.indexBy(attrDefs, "key");
+  const attrGroupDefMap = _.indexBy(attrGroupDefs, "key");
 
-  const agaInput = assignmentData.map(aga => {
+  const mockAMs = assignments.map(aga => {
     const gDef = attrGroupDefMap.get(aga.gkey);
     const aDef = attrDefMap.get(aga.akey);
     if (gDef && aDef) return {
@@ -73,7 +66,7 @@ async function createAllAttributeDefinition() {
     return null;
   }).filter(inp => inp !== null);
 
-  await attributeGroupAssignmentDTO.createMany(agaInput);
+  await attributeMgr.createAttributeGroupAssignments(mockAMs);
 }
 
 async function deleteAllTables() {
@@ -90,16 +83,16 @@ async function main() {
   await deleteAllTables();
   await createAllAttributeDefinition();
 
-  await SystemEntityMgr.createSystemEntity(
-    SystemEntityType.PRODUCT,
-    new Map([
-      ['productID', 'basic-0001'],
-      ['productName', 'Basic Outfit'],
-      ['active', 'true']
-    ])
-  )
+  // await systemEntityMgr.createSystemEntity(
+  //   SystemEntityType.PRODUCT,
+  //   new Map([
+  //     ['productID', 'basic-0001'],
+  //     ['productName', 'Basic Outfit'],
+  //     ['active', 'true']
+  //   ])
+  // )
 
-  await SystemEntityMgr.createSystemEntity(
+  await systemEntityMgr.createSystemEntity(
     SystemEntityType.PRODUCT,
     new Map([
       ['productID', 'tech-sling-099'],
@@ -113,15 +106,15 @@ async function main() {
     ])
   )
 
-  await SystemEntityMgr.createSystemEntity(
-    SystemEntityType.PRODUCT,
-    new Map([
-      ['productID', 'cargo-pants-v2'],
-      ['productName', 'Utility Cargo Pants'],
-      ['ean', '8801234567890'],
-      ['active', 'false']
-    ])
-  );
+  // await systemEntityMgr.createSystemEntity(
+  //   SystemEntityType.PRODUCT,
+  //   new Map([
+  //     ['productID', 'cargo-pants-v2'],
+  //     ['productName', 'Utility Cargo Pants'],
+  //     ['ean', '8801234567890'],
+  //     ['active', 'false']
+  //   ])
+  // );
 
   // await SystemEntityMgr.deleteSystemEntityByPrimary(SystemEntityType.PRODUCT, 'basic-2039')
 

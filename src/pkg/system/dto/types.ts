@@ -1,10 +1,13 @@
 import {
   SystemEntity,
+  SystemEntityType,
   AttributeValue,
+  AttributeValueType,
   AttributeDefinition,
   AttributeGroupDefinition,
-  AttributeGroupAssignment
+  AttributeGroupAssignment,
 } from '../../../../prisma/generated/client';
+import { AttributeGroupDefinitionCreateInput } from '../../../../prisma/generated/models';
 
 export type SystemEntityJoinAttributes = SystemEntity & {
   attributeValues: (
@@ -42,3 +45,26 @@ export type AttributeByTypeAndPrimary = AttributeValue & {
     attributeValues: AttributeValueJoinDefinition[];
   };
 };
+
+export const NA_AttributeDefinition: AttributeDefinition = {
+  ID: -1,
+  key: '',
+  label: '',
+  systemEntityType: SystemEntityType.NA,
+  attributeValueType: AttributeValueType.NA,
+  primary: false,
+  required: false,
+  unique: false,
+  minlength: null,
+  maxlength: null
+} as const;
+
+/**
+ * Utility type to make certain keys of a type optional
+ * Omit<T, K>: Creates a type by omitting keys K from type T
+ * Partial<Pick<T, K>>: Creates a type with only keys K from type T, making them optional
+ * The intersection (&) combines these two types to form the final type
+ */
+type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
+export type AttributeGroupDefinitionOptOrdinalCreateInput = Optional<AttributeGroupDefinitionCreateInput, 'ordinal'>;
