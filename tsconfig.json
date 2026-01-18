@@ -1,15 +1,10 @@
 {
+  "extends": "@tsconfig/node20/tsconfig.json",
+  "include": [
+    "tests/**/*"
+  ],
   "compilerOptions": {
-    "sourceMap": true,
-    "outDir": "dist",
-    "strict": true,
-    "lib": [
-      "esnext"
-    ],
-    "esModuleInterop": true,
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "target": "es2015"
+    "preserveConstEnums": true,
+    "outDir": "./dist/tsc"
   }
 }
