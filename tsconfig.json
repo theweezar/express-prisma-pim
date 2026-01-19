@@ -5,6 +5,9 @@
   ],
   "compilerOptions": {
     "preserveConstEnums": true,
-    "outDir": "./dist/tsc"
+    "outDir": "./dist/tsc",
+    "resolveJsonModule": true,
+    "noImplicitAny": false,
+    "removeComments": true
   }
 }

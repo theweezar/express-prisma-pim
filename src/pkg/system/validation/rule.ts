@@ -3,6 +3,7 @@ import {
   AttributeValueType
 } from "../../../../prisma/generated/client";
 import { Validation } from "./types";
+import _ from "../../_";
 
 export const notFound: Validation = (def, input) => ({
   validate: async () => {
@@ -20,10 +21,7 @@ export const notFound: Validation = (def, input) => ({
 
 export const required: Validation = (def, input) => ({
   validate: async () => {
-    if (def.required && (!input || input === '')) {
-      return false;
-    }
-    return true;
+    return !(def.required && !_.hasValue(input));
   },
   fail: () => ({
     code: def.key,
@@ -44,10 +42,7 @@ export const primaryUnique: Validation = (def, input) => ({
 
 export const minLength: Validation = (def, input) => ({
   validate: async () => {
-    if (def.minlength && input.length < def.minlength) {
-      return false;
-    }
-    return true;
+    return !(def.minlength && input.length < def.minlength);
   },
   fail: () => ({
     code: def.key,
@@ -57,10 +52,7 @@ export const minLength: Validation = (def, input) => ({
 
 export const maxLength: Validation = (def, input) => ({
   validate: async () => {
-    if (def.maxlength && input.length > def.maxlength) {
-      return false;
-    }
-    return true;
+    return !(def.maxlength && input.length > def.maxlength);
   },
   fail: () => ({
     code: def.key,
@@ -70,7 +62,7 @@ export const maxLength: Validation = (def, input) => ({
 
 export const mustBeBoolean: Validation = (def, input) => ({
   validate: async () => {
-    if (def.attributeValueType === AttributeValueType.BOOLEAN) {
+    if (def.attributeValueType === AttributeValueType.BOOLEAN && _.hasValue(input)) {
       return [true, 'true', false, 'false'].some(cst => cst === input);
     }
     return true;
@@ -83,10 +75,11 @@ export const mustBeBoolean: Validation = (def, input) => ({
 
 export const mustBeNumber: Validation = (def, input) => ({
   validate: async () => {
-    if (def.attributeValueType === AttributeValueType.NUMBER && isNaN(Number(input))) {
-      return false;
-    }
-    return true;
+    return !(
+      def.attributeValueType === AttributeValueType.NUMBER
+      && _.hasValue(input)
+      && isNaN(Number(input))
+    );
   },
   fail: () => ({
     code: def.key,
@@ -96,13 +89,14 @@ export const mustBeNumber: Validation = (def, input) => ({
 
 export const mustBeArray: Validation = (def, input) => ({
   validate: async () => {
-    if (def.attributeValueType === AttributeValueType.ARRAY) {
+    if (def.attributeValueType === AttributeValueType.ARRAY && _.hasValue(input)) {
       try {
         const parsed = JSON.parse(input);
         if (Array.isArray(parsed)) return true;
       } catch (error) { }
+      return false;
     }
-    return false;
+    return true;
   },
   fail: () => ({
     code: def.key,
@@ -112,16 +106,14 @@ export const mustBeArray: Validation = (def, input) => ({
 
 export const mustBeDatetime: Validation = (def, input) => ({
   validate: async () => {
-    if (
+    return !(
       (
         def.attributeValueType === AttributeValueType.DATE
         || def.attributeValueType === AttributeValueType.DATETIME
       )
+      && _.hasValue(input)
       && isNaN(Date.parse(input))
-    ) {
-      return false;
-    }
-    return true;
+    );
   },
   fail: () => ({
     code: def.key,

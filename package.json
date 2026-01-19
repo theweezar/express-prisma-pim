@@ -5,13 +5,13 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "watch": "tsx watch src/index.ts",
-    "build:test": "tsc --resolveJsonModule",
-    "babel": "babel ./dist/tsc --out-dir ./dist/babel && babel ./dist/tsc/prisma/json --out-dir ./dist/babel/prisma/json --copy-files",
-    "test": "jest",
+    "test:jest": "jest",
+    "test:vitest": "vitest run --config vitest.config.js",
     "dump": "prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql",
     "reset": "prisma migrate reset",
     "gen": "prisma generate",
-    "seed": "tsx seed.ts"
+    "seed": "tsx seed.ts",
+    "clear:dist": "rm -rf dist/*"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.2.0",
@@ -22,11 +22,14 @@
     "@babel/cli": "^7.28.6",
     "@babel/core": "^7.28.6",
     "@babel/preset-env": "^7.28.6",
+    "@babel/preset-typescript": "^7.28.5",
     "@tsconfig/node20": "^20.1.8",
     "@types/better-sqlite3": "^7.6.13",
     "@types/express": "5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.5",
+    "@vitest/coverage-v8": "^4.0.17",
+    "babel-jest": "^30.2.0",
     "babel-plugin-transform-import-meta": "^2.3.3",
     "dotenv": "^17.2.3",
     "jest": "^30.2.0",
@@ -34,6 +37,8 @@
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.17"
   }
 }

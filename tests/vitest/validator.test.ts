@@ -1,52 +1,17 @@
-import { describe, it, expect, beforeAll } from '@jest/globals';
+import { describe, it, expect, beforeAll } from 'vitest';
 import {
   AttributeDefinition,
-  SystemEntityType,
-  AttributeValueType
-} from '../../../../../prisma/generated/client';
+} from '../../prisma/generated/client';
 import {
   _validateValueFollowDefinition,
   validate
-} from '../../../../../src/pkg/system/validation/validator';
-import attributeDef from '../../../../../prisma/json/attributeDef.json';
+} from '../../src/pkg/system/validation/validator';
+import {
+  createMockAttributeDefinitions,
+  createMockEntity
+} from '../mock';
 
 let mockAttributeDefinitions: AttributeDefinition[];
-
-function createMockAttributeDefinitions(): AttributeDefinition[] {
-  const definitions: AttributeDefinition[] = [];
-
-  attributeDef.forEach(entity => {
-    entity.definition.forEach((attr, i) => {
-      definitions.push({
-        ID: i,
-        key: attr.key,
-        label: attr.label,
-        systemEntityType: entity.type as SystemEntityType,
-        attributeValueType: attr.attributeValueType as AttributeValueType,
-        primary: attr.primary || false,
-        required: attr.required || false,
-        unique: attr.unique || false,
-        minlength: attr.minlength || null,
-        maxlength: attr.maxlength || null
-      });
-    });
-  });
-
-  return definitions;
-}
-
-function createMockEntity(): Map<string, unknown> {
-  return new Map([
-    ['productID', 'tech-sling-099'],
-    ['productName', 'Pro-Travel Sling Bag'],
-    ['material', '70% NYLON + 30% POLYESTER'],
-    ['dimensionHeight', '27.0'],
-    ['dimensionWidth', '18.0'],
-    ['dimensionLength', '6.5'],
-    ['weight', '0.32'],
-    ['active', 'true'],
-  ]);
-}
 
 describe('Validator', () => {
   beforeAll(() => {
@@ -109,7 +74,7 @@ describe('Validator', () => {
         ['unknownField', 'some value'],
       ]);
       const result = await validate(mockAttributeDefinitions, mapWithUnknown, false);
-      expect(result).toBe(true);
+      expect(result).toBeInstanceOf(Error);
     });
   });
 });
