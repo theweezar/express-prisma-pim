@@ -3,6 +3,7 @@ import {
   AttributeValueType
 } from "../../../../prisma/generated/client";
 import { Validation } from "./types";
+import { ValidationError } from "./error";
 import _ from "../../_";
 
 export const notFound: Validation = (def, input) => ({
@@ -13,20 +14,22 @@ export const notFound: Validation = (def, input) => ({
     }
     return true;
   },
-  fail: () => ({
-    code: def.key,
-    message: `Unknown attribute '${def.key}'.`
-  })
+  fail: () => new ValidationError(
+    def.key,
+    `Unknown attribute.`,
+    `The attribute '${def.key}' does not exist.`
+  )
 });
 
 export const required: Validation = (def, input) => ({
   validate: async () => {
     return !(def.required && !_.hasValue(input));
   },
-  fail: () => ({
-    code: def.key,
-    message: `Attribute '${def.key}' (${def.label}) is required.`
-  })
+  fail: () => new ValidationError(
+    def.key,
+    `Attribute is required.`,
+    `The required attribute '${def.key}' (${def.label}) is missing.`
+  )
 });
 
 export const primaryUnique: Validation = (def, input) => ({
@@ -34,30 +37,33 @@ export const primaryUnique: Validation = (def, input) => ({
     // TODO: Move Validate uniqueness to another function, use find ...or...
     return true;
   },
-  fail: () => ({
-    code: def.key,
-    message: `Attribute '${def.key}': (${input}) is not unique.`
-  })
+  fail: () => new ValidationError(
+    def.key,
+    `Value is not unique.`,
+    `The value '${input}' for attribute '${def.key}' is not unique.`
+  )
 });
 
 export const minLength: Validation = (def, input) => ({
   validate: async () => {
     return !(def.minlength && input.length < def.minlength);
   },
-  fail: () => ({
-    code: def.key,
-    message: `Attribute '${def.key}' must be at least ${def.minlength} characters.`
-  })
+  fail: () => new ValidationError(
+    def.key,
+    `String must be at least the minimum length.`,
+    `The value '${input}' has ${input.length} characters but minimum for '${def.key}' is ${def.minlength}.`
+  )
 });
 
 export const maxLength: Validation = (def, input) => ({
   validate: async () => {
     return !(def.maxlength && input.length > def.maxlength);
   },
-  fail: () => ({
-    code: def.key,
-    message: `Attribute '${def.key}' must be at most ${def.maxlength} characters.`
-  })
+  fail: () => new ValidationError(
+    def.key,
+    `String must not exceed the maximum length.`,
+    `The value '${input}' has ${input.length} characters but maximum for '${def.key}' is ${def.maxlength}.`
+  )
 });
 
 export const mustBeBoolean: Validation = (def, input) => ({
@@ -67,10 +73,11 @@ export const mustBeBoolean: Validation = (def, input) => ({
     }
     return true;
   },
-  fail: () => ({
-    code: def.key,
-    message: `Attribute '${def.key}' (${def.label}) must be a boolean.`
-  })
+  fail: () => new ValidationError(
+    def.key,
+    `Value must be a boolean.`,
+    `The value '${input}' for '${def.key}' (${def.label}) is not a valid boolean. Accepted values: true, false, 'true', 'false'.`
+  )
 });
 
 export const mustBeNumber: Validation = (def, input) => ({
@@ -81,10 +88,11 @@ export const mustBeNumber: Validation = (def, input) => ({
       && isNaN(Number(input))
     );
   },
-  fail: () => ({
-    code: def.key,
-    message: `Attribute '${def.key}' (${def.label}) must be a number.`
-  })
+  fail: () => new ValidationError(
+    def.key,
+    `Value must be a number.`,
+    `The value '${input}' for '${def.key}' (${def.label}) cannot be converted to a number.`
+  )
 });
 
 export const mustBeArray: Validation = (def, input) => ({
@@ -98,10 +106,11 @@ export const mustBeArray: Validation = (def, input) => ({
     }
     return true;
   },
-  fail: () => ({
-    code: def.key,
-    message: `Attribute '${def.key}' (${def.label}) must be an array.`
-  })
+  fail: () => new ValidationError(
+    def.key,
+    `Value must be an array.`,
+    `The value '${input}' for '${def.key}' (${def.label}) is not a valid JSON array.`
+  )
 });
 
 export const mustBeDatetime: Validation = (def, input) => ({
@@ -115,8 +124,9 @@ export const mustBeDatetime: Validation = (def, input) => ({
       && isNaN(Date.parse(input))
     );
   },
-  fail: () => ({
-    code: def.key,
-    message: `Attribute '${def.key}' (${def.label}) must be a valid date or datetime.`
-  })
+  fail: () => new ValidationError(
+    def.key,
+    `Value must be a valid date or datetime.`,
+    `The value '${input}' for '${def.key}' (${def.label}) cannot be parsed as a valid date or datetime.`
+  )
 });

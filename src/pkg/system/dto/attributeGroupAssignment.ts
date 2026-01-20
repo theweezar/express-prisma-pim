@@ -6,6 +6,14 @@ import {
 } from '../../../../prisma/generated/client';
 import { AttributeGroupAssignmentCreateManyInput } from './types';
 
+async function getByID(ID: number | string): Promise<AttributeGroupAssignment | null> {
+  return await prisma.attributeGroupAssignment.findUnique({
+    where: {
+      ID: Number(ID)
+    }
+  });
+}
+
 async function create(
   pc: DTOPrismaClient,
   groupDef: AttributeGroupDefinition,
@@ -63,6 +71,7 @@ async function remove(
 }
 
 export default {
+  getByID,
   create: async (
     groupDef: AttributeGroupDefinition,
     attrDef: AttributeDefinition,

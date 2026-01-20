@@ -3,11 +3,12 @@ import { NA_AttributeDefinition } from "../dto/types";
 import { Validation } from "./types";
 import * as rule from "./rule";
 import _ from "../../_";
+import { ValidationError } from "./error";
 
 export async function _validateValueFollowDefinition(
   definition: AttributeDefinition,
   input: unknown
-): Promise<string | Error> {
+): Promise<string | ValidationError> {
   const inputValue = String(input).trim();
   const validations: Validation[] = [
     rule.notFound,
@@ -25,8 +26,7 @@ export async function _validateValueFollowDefinition(
     const validation = initValidation(definition, inputValue);
     const result = await validation.validate();
     if (!result) {
-      const failure = validation.fail();
-      return new Error(failure.message);
+      return validation.fail();
     }
   }
 
@@ -37,7 +37,7 @@ export async function validate(
   definitions: AttributeDefinition[],
   input: Map<string, unknown>,
   throwError: boolean = true
-): Promise<true | Error> {
+): Promise<true | ValidationError> {
   const defMap = _.indexBy(definitions, 'key');
   for (const [code, value] of input.entries()) {
     let def = defMap.get(code);

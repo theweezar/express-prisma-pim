@@ -27,6 +27,22 @@ async function createAttributeDefinitions(input: AttributeDefinitionCreateManyIn
   return await attributeDefinitionDTO.createManyAndReturn(input);
 }
 
+async function getAttributeDefinitionByID(id: number) {
+  return await attributeDefinitionDTO.getByID(id);
+}
+
+async function getAttributeDefinitionsByEntityType(type: SystemEntityType) {
+  return await attributeValueDTO.getAttributeDefinitions(type);
+}
+
+async function updateAttributeDefinition(def: AttributeDefinition, updates: Partial<AttributeDefinitionCreateInput>) {
+  return await attributeDefinitionDTO.update(def, updates);
+}
+
+async function deleteAttributeDefinition(def: AttributeDefinition) {
+  return await attributeDefinitionDTO.remove(def);
+}
+
 async function createAttributeGroupDefinition(
   input: AttributeGroupDefinitionOptOrdinalCreateInput
 ): Promise<AttributeGroupDefinition> {
@@ -44,6 +60,21 @@ async function createAttributeGroupDefinitions(
   groups: AttributeGroupDefinitionCreateManyInput[]
 ): Promise<AttributeGroupDefinition[]> {
   return await attributeGroupDefinitionDTO.createManyAndReturn(groups)
+}
+
+async function getAttributeGroupByID(id: number) {
+  return await attributeGroupDefinitionDTO.getByID(id);
+}
+
+async function updateAttributeGroup(
+  groupDef: AttributeGroupDefinition,
+  updates: Partial<AttributeGroupDefinitionCreateInput>
+) {
+  return await attributeGroupDefinitionDTO.update(groupDef, updates);
+}
+
+async function deleteAttributeGroup(groupDef: AttributeGroupDefinition) {
+  return await attributeGroupDefinitionDTO.remove(groupDef);
 }
 
 async function createAttributeGroupAssignment(
@@ -98,6 +129,18 @@ async function unassignAttributeFromGroup(
   await attributeGroupAssignmentDTO.remove(group, attribute);
 }
 
+async function getAttributeGroupAssignmentByID(id: number) {
+  return await attributeGroupAssignmentDTO.getByID(id);
+}
+
+async function deleteAttributeGroupAssignment(id: number) {
+  // const assignment = await attributeGroupAssignmentDTO.getByID(id);
+  // if (!assignment) {
+  //   throw new Error(`Attribute group assignment with ID ${id} not found`);
+  // }
+  // return await attributeGroupAssignmentDTO.remove(assignment);
+}
+
 async function getGroupsByEntityType(
   type: SystemEntityType
 ): Promise<AttributeGroupDefinition[]> {
@@ -111,21 +154,23 @@ async function getGroupsJoinAssignmentsByEntityType(
 }
 
 export default {
-  // Create
   createAttributeDefinition,
   createAttributeDefinitions,
+  getAttributeDefinitionByID,
+  getAttributeDefinitionsByEntityType,
+  updateAttributeDefinition,
+  deleteAttributeDefinition,
   createAttributeGroupDefinition,
   createAttributeGroupDefinitions,
+  getAttributeGroupByID,
+  updateAttributeGroup,
+  deleteAttributeGroup,
   createAttributeGroupAssignment,
   createAttributeGroupAssignments,
-
-  // Update
+  getAttributeGroupAssignmentByID,
+  deleteAttributeGroupAssignment,
   assignAttributeToGroup,
-
-  // Delete
   unassignAttributeFromGroup,
-
-  // Select
   getGroupsByEntityType,
   getGroupsJoinAssignmentsByEntityType,
 };

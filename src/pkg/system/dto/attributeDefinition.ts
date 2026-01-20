@@ -4,6 +4,24 @@ import {
 } from '../../../../prisma/generated/models';
 import { AttributeDefinition } from '../../../../prisma/generated/client';
 
+async function getByID(
+  pc: DTOPrismaClient,
+  ID: number
+) {
+  return await pc.attributeDefinition.findUnique({
+    where: { ID },
+  });
+}
+
+async function getByKey(
+  pc: DTOPrismaClient,
+  key: string
+) {
+  return await pc.attributeDefinition.findFirst({
+    where: { key },
+  });
+}
+
 async function create(
   pc: DTOPrismaClient,
   input: AttributeDefinitionCreateInput
@@ -31,7 +49,33 @@ async function createManyAndReturn(
   });
 }
 
+async function update(
+  pc: DTOPrismaClient,
+  attrDef: AttributeDefinition,
+  updates: Partial<AttributeDefinitionCreateInput>
+) {
+  return await pc.attributeDefinition.update({
+    where: { ID: attrDef.ID },
+    data: updates,
+  });
+}
+
+async function remove(
+  pc: DTOPrismaClient,
+  attrDef: AttributeDefinition
+) {
+  return await pc.attributeDefinition.delete({
+    where: { ID: attrDef.ID },
+  });
+}
+
 export default {
+  getByID: async (ID: number) => {
+    return await getByID(prisma, ID);
+  },
+  getByKey: async (key: string) => {
+    return await getByKey(prisma, key);
+  },
   create: async (input: AttributeDefinitionCreateInput) => {
     return await create(prisma, input);
   },
@@ -41,8 +85,20 @@ export default {
   createManyAndReturn: async (input: AttributeDefinitionCreateInput[]): Promise<AttributeDefinition[]> => {
     return await createManyAndReturn(prisma, input);
   },
+  update: async (attrDef: AttributeDefinition, updates: Partial<AttributeDefinitionCreateInput>) => {
+    return await update(prisma, attrDef, updates);
+  },
+  remove: async (attrDef: AttributeDefinition) => {
+    return await remove(prisma, attrDef);
+  },
   wrapTx: (tx: DTOPrismaClient) => {
     return {
+      getByID: async (ID: number) => {
+        return await getByID(tx, ID);
+      },
+      getByKey: async (key: string) => {
+        return await getByKey(tx, key);
+      },
       create: async (input: AttributeDefinitionCreateInput) => {
         return await create(tx, input);
       },
@@ -51,6 +107,12 @@ export default {
       },
       createManyAndReturn: async (input: AttributeDefinitionCreateInput[]): Promise<AttributeDefinition[]> => {
         return await createManyAndReturn(tx, input);
+      },
+      update: async (attrDef: AttributeDefinition, updates: Partial<AttributeDefinitionCreateInput>) => {
+        return await update(tx, attrDef, updates);
+      },
+      remove: async (attrDef: AttributeDefinition) => {
+        return await remove(tx, attrDef);
       },
     };
   },

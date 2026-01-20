@@ -1,9 +1,7 @@
 import { AttributeDefinition } from "../../../../prisma/generated/client";
+import { ValidationError } from "./error";
 
-export type Failure = {
-  code: string | number,
-  message: string
-};
+export type Failure = ValidationError;
 
 export type Validator = {
   validate: (() => Promise<Boolean>)

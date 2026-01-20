@@ -24,6 +24,25 @@ async function getSystemEntityByID(
   });
 }
 
+async function getSystemEntityByUUID(
+  type: SystemEntityType,
+  UUID: string
+): Promise<SystemEntityJoinAttributes | null> {
+  return await prisma.systemEntity.findUnique({
+    where: {
+      UUID: UUID,
+      systemEntityType: type
+    },
+    include: {
+      attributeValues: {
+        include: {
+          attributeDefinition: true,
+        },
+      },
+    },
+  });
+}
+
 async function getSystemEntityByPrimary(
   type: SystemEntityType,
   primaryValue: string
@@ -75,6 +94,7 @@ async function remove(
 
 export default {
   getSystemEntityByID,
+  getSystemEntityByUUID,
   getSystemEntityByPrimary,
   create: async (
     type: SystemEntityType

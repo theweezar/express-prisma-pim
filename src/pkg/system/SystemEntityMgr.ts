@@ -6,16 +6,13 @@ import {
   AttributeGroupDefinition,
 } from '../../../prisma/generated/client';
 import {
-  AttributeDefinitionCreateInput,
   AttributeValueCreateManyInput
 } from '../../../prisma/generated/models';
 import { validate } from './validation/validator';
 import _ from '../_';
 import systemEntityDTO from './dto/systemEntity';
 import attributeValueDTO from './dto/attributeValue';
-import attributeDefinitionDTO from './dto/attributeDefinition';
 import attributeGroupDefinitionDTO from './dto/attributeGroupDefinition';
-import attributeGroupAssignmentDTO from './dto/attributeGroupAssignment';
 import { AttributeGroupDefinitionJoinAssignments } from './dto/types';
 
 const SystemEntityTX = {
@@ -78,6 +75,13 @@ async function getSystemEntity(
   return await systemEntityDTO.getSystemEntityByID(type, ID);
 }
 
+async function getSystemEntityByUUID(
+  type: SystemEntityType,
+  UUID: string
+) {
+  return await systemEntityDTO.getSystemEntityByUUID(type, UUID);
+}
+
 async function createSystemEntity(
   type: SystemEntityType,
   input: Map<string, unknown>
@@ -95,34 +99,70 @@ async function getSystemEntityByPrimary(
   return await systemEntityDTO.getSystemEntityByPrimary(type, primaryValue);
 }
 
+async function getSystemEntityByPrimaryOrThrowError(
+  type: SystemEntityType,
+  primaryValue: string
+) {
+  const entity = await getSystemEntityByPrimary(type, primaryValue);
+  if (!entity) {
+    throw new Error(`System entity with primary ${primaryValue} not found`);
+  }
+  return entity;
+}
+
+async function getSystemEntityByUUIDOrThrowError(
+  type: SystemEntityType,
+  UUID: string
+) {
+  const entity = await getSystemEntityByUUID(type, UUID);
+  if (!entity) {
+    throw new Error(`System entity with UUID ${UUID} not found`);
+  }
+  return entity;
+}
+
+async function updateSystemEntity(
+  entity: SystemEntity,
+  input: Map<string, unknown>
+) {
+  const attributeDefinitions = await attributeValueDTO.getAttributeDefinitions(entity.systemEntityType);
+  await validate(attributeDefinitions, input);
+  const inputTemplate = _.projectToTemplate(_.uniqueValuesOf(attributeDefinitions, 'key'), input);
+  await SystemEntityTX.updateSystemEntity(entity, attributeDefinitions, inputTemplate);
+}
+
 async function updateSystemEntityByPrimary(
   type: SystemEntityType,
   primaryValue: string,
   input: Map<string, unknown>
 ) {
-  // Check if system entity exists
-  const existingEntity = await getSystemEntityByPrimary(type, primaryValue);
-  if (!existingEntity) {
-    throw new Error(`System entity with primary ${primaryValue} not found`);
-  }
+  const entity = await getSystemEntityByPrimaryOrThrowError(type, primaryValue);
+  await updateSystemEntity(entity, input);
+}
 
-  const attributeDefinitions = await attributeValueDTO.getAttributeDefinitions(type);
-  await validate(attributeDefinitions, input);
-  const inputTemplate = _.projectToTemplate(_.uniqueValuesOf(attributeDefinitions, 'key'), input);
-  await SystemEntityTX.updateSystemEntity(existingEntity, attributeDefinitions, inputTemplate);
+async function updateSystemEntityByUUID(
+  type: SystemEntityType,
+  UUID: string,
+  input: Map<string, unknown>
+) {
+  const entity = await getSystemEntityByUUIDOrThrowError(type, UUID);
+  await updateSystemEntity(entity, input);
 }
 
 async function deleteSystemEntityByPrimary(
   type: SystemEntityType,
   primaryValue: string
 ) {
-  // Check if system entity exists
-  const existingEntity = await getSystemEntityByPrimary(type, primaryValue);
-  if (!existingEntity) {
-    throw new Error(`System entity with primary ${primaryValue} not found`);
-  }
+  const entity = await getSystemEntityByPrimaryOrThrowError(type, primaryValue);
+  await SystemEntityTX.deleteSystemEntity(entity);
+}
 
-  await SystemEntityTX.deleteSystemEntity(existingEntity);
+async function deleteSystemEntityByUUID(
+  type: SystemEntityType,
+  UUID: string
+) {
+  const entity = await getSystemEntityByUUIDOrThrowError(type, UUID);
+  await SystemEntityTX.deleteSystemEntity(entity);
 }
 
 async function getGroupsByEntityType(
@@ -138,18 +178,14 @@ async function getGroupsJoinAssignmentsByEntityType(
 }
 
 export default {
-  // Select
   getSystemEntity,
+  getSystemEntityByUUID,
   getSystemEntityByPrimary,
   getGroupsByEntityType,
   getGroupsJoinAssignmentsByEntityType,
-
-  // Create
   createSystemEntity,
-
-  // Update
   updateSystemEntityByPrimary,
-
-  // Delete
-  deleteSystemEntityByPrimary
+  updateSystemEntityByUUID,
+  deleteSystemEntityByPrimary,
+  deleteSystemEntityByUUID
 };

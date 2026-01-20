@@ -36,7 +36,7 @@ async function createManyAndReturn(
   });
 }
 
-async function getGroupByID(ID: number | string): Promise<AttributeGroupDefinition | null> {
+async function getByID(ID: number | string): Promise<AttributeGroupDefinition | null> {
   return await prisma.attributeGroupDefinition.findUnique({
     where: {
       ID: Number(ID)
@@ -106,8 +106,28 @@ async function getGroupJoinAssignmentsByID(
   });
 }
 
+async function update(
+  pc: DTOPrismaClient,
+  groupDef: AttributeGroupDefinition,
+  updates: Partial<AttributeGroupDefinitionCreateInput>
+): Promise<AttributeGroupDefinition> {
+  return await pc.attributeGroupDefinition.update({
+    where: { ID: groupDef.ID },
+    data: updates
+  });
+}
+
+async function remove(
+  pc: DTOPrismaClient,
+  groupDef: AttributeGroupDefinition
+): Promise<AttributeGroupDefinition> {
+  return await pc.attributeGroupDefinition.delete({
+    where: { ID: groupDef.ID }
+  });
+}
+
 export default {
-  getGroupByID,
+  getByID,
   getGroupJoinAssignmentsByID,
   getGroupsJoinAssignmentsByEntityType,
   getGroupsByEntityType,
@@ -121,6 +141,12 @@ export default {
   createManyAndReturn: async (groups: AttributeGroupDefinitionCreateManyInput[]): Promise<AttributeGroupDefinition[]> => {
     return await createManyAndReturn(prisma, groups);
   },
+  update: async (groupDef: AttributeGroupDefinition, updates: Partial<AttributeGroupDefinitionCreateInput>): Promise<AttributeGroupDefinition> => {
+    return await update(prisma, groupDef, updates);
+  },
+  remove: async (groupDef: AttributeGroupDefinition): Promise<AttributeGroupDefinition> => {
+    return await remove(prisma, groupDef);
+  },
   wrapTx: (tx: DTOPrismaClient) => {
     return {
       create: async (group: AttributeGroupDefinitionCreateInput): Promise<AttributeGroupDefinition> => {
@@ -131,6 +157,12 @@ export default {
       },
       createManyAndReturn: async (groups: AttributeGroupDefinitionCreateManyInput[]): Promise<AttributeGroupDefinition[]> => {
         return await createManyAndReturn(tx, groups);
+      },
+      update: async (groupDef: AttributeGroupDefinition, updates: Partial<AttributeGroupDefinitionCreateInput>): Promise<AttributeGroupDefinition> => {
+        return await update(tx, groupDef, updates);
+      },
+      remove: async (groupDef: AttributeGroupDefinition): Promise<AttributeGroupDefinition> => {
+        return await remove(tx, groupDef);
       }
     }
   }
