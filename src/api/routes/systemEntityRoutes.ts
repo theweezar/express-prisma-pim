@@ -1,118 +1,91 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { SystemEntityType } from '../../../prisma/generated/client';
+import { InvalidTypeError, EntityNotFoundError } from '../../pkg/error/error';
+import { toEntityDetailAPIResponse } from '../../pkg/system/models/adapter';
 import systemEntityMgr from '../../pkg/system/systemEntityMgr';
-import { InvalidEntityTypeError, InvalidTypeError, EntityNotFoundError } from '../../pkg/system/validation/error';
-import { toEntityDetail } from '../../pkg/system/models/adapter';
+import requireType from '../middleware/requireType';
 
-const router = Router();
+const router = Router({
+  // Need this to merge "type" into router.
+  mergeParams: true
+});
 
-function isValidType(type: any) {
-  return !!(type && type !== SystemEntityType.NA && ((type as string) in SystemEntityType));
-}
+router.use(requireType);
 
-// POST /entities - Create a new system entity
+// POST /entities/:type - Create a new system entity
 router.post('/', async (req: Request, res: Response, NextFunction: NextFunction) => {
   try {
-    const { type, attributes } = req.body;
-
-    if (!isValidType(type)) {
-      return res.status(400).json({ error: (new InvalidEntityTypeError(`${type} does not exist`)).toObject() });
-    }
+    const { type } = req.params;
+    const { attributes } = req.body;
 
     if (!attributes || typeof attributes !== 'object') {
-      return res.status(400).json({ error: (new InvalidTypeError('Attributes must be provided as an object').toObject()) });
+      throw new InvalidTypeError('Attributes must be provided as an object');
     }
 
     const inputMap = new Map(Object.entries(attributes));
-    await systemEntityMgr.createSystemEntity(type, inputMap);
+    await systemEntityMgr.createSystemEntity(type as SystemEntityType, inputMap);
 
-    res.status(201).json({
-      success: true,
-      message: 'Entity created successfully'
+    res.status(201).json({ success: true });
+  } catch (error) {
+    NextFunction(error);
+  }
+});
+
+// GET /entities/:type - List entities by type
+router.get('/', async (req: Request, res: Response, NextFunction: NextFunction) => {
+  try {
+    const { type } = req.params;
+    const entities = await systemEntityMgr.getSystemEntities(type as SystemEntityType);
+    const entitiesRes = entities.map(entity => (toEntityDetailAPIResponse(entity)));
+    res.status(200).json({ data: entitiesRes });
+  } catch (error) {
+    NextFunction(error);
+  }
+});
+
+// GET /entities/:type/:uuid - Get entity by UUID
+router.get('/:uuid', async (req: Request, res: Response, NextFunction: NextFunction) => {
+  try {
+    const { type, uuid } = req.params;
+    const entity = await systemEntityMgr.getSystemEntityByUUID(type as SystemEntityType, uuid);
+
+    if (!entity) {
+      throw new EntityNotFoundError(`${type} not found`);
+    }
+
+    res.status(200).json({
+      data: toEntityDetailAPIResponse(entity)
     });
   } catch (error) {
     NextFunction(error);
   }
 });
 
-// GET /entities - List entities by type
-// router.get('/', async (req: Request, res: Response, NextFunction: NextFunction) => {
-//   try {
-//     const { type } = req.query;
-
-//     if (!isValidType(type)) {
-//       return res.status(400).json({ error: (new InvalidEntityTypeError(`${type} does not exist`)).toObject() });
-//     }
-
-//     // const groups = await systemEntityMgr.getSystemEntity()
-//     res.status(200).json({});
-//   } catch (error) {
-//     NextFunction(error);
-//   }
-// });
-
-// GET /entities/:uuid - Get entity by UUID
-router.get('/:type/:uuid', async (req: Request, res: Response, NextFunction: NextFunction) => {
+// PATCH /entities/:type/:uuid - Update entity
+router.patch('/:uuid', async (req: Request, res: Response, NextFunction: NextFunction) => {
   try {
     const { type, uuid } = req.params;
+    const { attributes } = req.body;
 
-    if (!isValidType(type)) {
-      return res.status(400).json({ error: (new InvalidEntityTypeError(`${type} does not exist`)).toObject() });
+    if (!attributes || typeof attributes !== 'object') {
+      throw new InvalidTypeError('Attributes must be provided as an object');
     }
 
-    const entity = await systemEntityMgr.getSystemEntityByUUID(type as SystemEntityType, uuid);
+    const inputMap = new Map(Object.entries(attributes));
+    await systemEntityMgr.updateSystemEntityByUUID(type as SystemEntityType, uuid, inputMap);
 
-    if (!entity) {
-      return res.status(404).json({ error: (new EntityNotFoundError(`${type} not found`)).toObject() });
-    }
-
-    res.status(200).json(toEntityDetail(entity));
+    res.status(200).json({ success: true });
   } catch (error) {
     NextFunction(error);
   }
 });
 
-// PATCH /entities/:uuid - Update entity
-// router.patch('/:uuid', async (req: Request, res: Response, NextFunction: NextFunction) => {
-//   try {
-//     const { uuid } = req.params;
-//     const { attributes } = req.body;
-
-//     if (!attributes || typeof attributes !== 'object') {
-//       return res.status(400).json({ error: 'Attributes must be provided as an object' });
-//     }
-
-//     const entity = await systemEntityMgr.getSystemEntityByUUID(SystemEntityType.PRODUCT, uuid);
-//     if (!entity) {
-//       return res.status(404).json({ error: 'Entity not found' });
-//     }
-
-//     const inputMap = new Map(Object.entries(attributes));
-//     await systemEntityMgr.updateSystemEntityByUUID(entity, inputMap);
-
-//     res.status(200).json({ message: 'Entity updated successfully' });
-//   } catch (error) {
-//     NextFunction(error);
-//   }
-// });
-
 // DELETE /entities/:uuid - Delete entity
-router.delete('/:type/:uuid', async (req: Request, res: Response, NextFunction: NextFunction) => {
+router.delete('/:uuid', async (req: Request, res: Response, NextFunction: NextFunction) => {
   try {
     const { type, uuid } = req.params;
-
-    if (!isValidType(type)) {
-      return res.status(400).json({ error: (new InvalidEntityTypeError(`${type} does not exist`)).toObject() });
-    }
-
-    const entity = await systemEntityMgr.getSystemEntityByUUID(type as SystemEntityType, uuid);
-
-    if (!entity) {
-      return res.status(404).json({ error: (new EntityNotFoundError(`${type} not found`)).toObject() });
-    }
-
-    await systemEntityMgr.deleteSystemEntityByUUID(entity.systemEntityType, uuid);
-    res.status(200).json({ message: 'Entity deleted successfully' });
+    await systemEntityMgr.deleteSystemEntityByUUID(type as SystemEntityType, uuid);
+    res.status(200).json({ success: true });
   } catch (error) {
     NextFunction(error);
   }

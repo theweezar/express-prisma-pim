@@ -5,6 +5,23 @@ import {
 } from '../../../../prisma/generated/client';
 import { SystemEntityJoinAttributes } from './types';
 
+async function getSystemEntitiesByType(
+  type: SystemEntityType,
+): Promise<SystemEntityJoinAttributes[]> {
+  return await prisma.systemEntity.findMany({
+    where: {
+      systemEntityType: type
+    },
+    include: {
+      attributeValues: {
+        include: {
+          attributeDefinition: true,
+        },
+      },
+    },
+  });
+}
+
 async function getSystemEntityByID(
   type: SystemEntityType,
   ID: number | string
@@ -80,19 +97,35 @@ async function create(
   });
 }
 
+async function update(
+  pc: DTOPrismaClient,
+  entity: SystemEntity
+) {
+  await pc.systemEntity.update({
+    where: {
+      ID: entity.ID
+    },
+    data: {
+      version: {
+        increment: 1
+      }
+    },
+  });
+}
+
 async function remove(
   pc: DTOPrismaClient,
   entity: SystemEntity
 ) {
   await pc.systemEntity.delete({
     where: {
-      ID: entity.ID,
-      systemEntityType: entity.systemEntityType,
+      ID: entity.ID
     },
   });
 }
 
 export default {
+  getSystemEntitiesByType,
   getSystemEntityByID,
   getSystemEntityByUUID,
   getSystemEntityByPrimary,
@@ -106,6 +139,11 @@ export default {
   ) => {
     await remove(prisma, entity);
   },
+  update: async (
+    entity: SystemEntity
+  ) => {
+    await update(prisma, entity);
+  },
   wrapTx: (tx: DTOPrismaClient) => {
     return {
       create: async (type: SystemEntityType) => {
@@ -113,6 +151,9 @@ export default {
       },
       remove: async (entity: SystemEntity) => {
         return await remove(tx, entity);
+      },
+      update: async (entity: SystemEntity) => {
+        return await update(tx, entity);
       },
     }
   }

@@ -3,7 +3,8 @@ import {
   AttributeValueType
 } from "../../../../prisma/generated/client";
 import { Validation } from "./types";
-import { ValidationError } from "./error";
+import { ValidationError } from "../../error/error";
+import attributeValueDTO from '../dto/attributeValue';
 import _ from "../../_";
 
 export const notFound: Validation = (def, input) => ({
@@ -15,7 +16,6 @@ export const notFound: Validation = (def, input) => ({
     return true;
   },
   fail: () => new ValidationError(
-    def.key,
     `Unknown attribute.`,
     `The attribute '${def.key}' does not exist.`
   )
@@ -23,24 +23,28 @@ export const notFound: Validation = (def, input) => ({
 
 export const required: Validation = (def, input) => ({
   validate: async () => {
-    return !(def.required && !_.hasValue(input));
+    return !(
+      (def.required || def.primary)
+      && !_.hasValue(input)
+    );
   },
   fail: () => new ValidationError(
-    def.key,
     `Attribute is required.`,
-    `The required attribute '${def.key}' (${def.label}) is missing.`
+    `The required attribute '${def.key}' is missing.`
   )
 });
 
 export const primaryUnique: Validation = (def, input) => ({
   validate: async () => {
-    // TODO: Move Validate uniqueness to another function, use find ...or...
+    if (def.primary) {
+      const value = await attributeValueDTO.getAttributeByTypeAndPrimary(def.systemEntityType, input);
+      return !value;
+    }
     return true;
   },
   fail: () => new ValidationError(
-    def.key,
-    `Value is not unique.`,
-    `The value '${input}' for attribute '${def.key}' is not unique.`
+    `Primary attribute must be unique.`,
+    `The primary attribute '${def.key}' is not unique.`
   )
 });
 
@@ -49,7 +53,6 @@ export const minLength: Validation = (def, input) => ({
     return !(def.minlength && input.length < def.minlength);
   },
   fail: () => new ValidationError(
-    def.key,
     `String must be at least the minimum length.`,
     `The value '${input}' has ${input.length} characters but minimum for '${def.key}' is ${def.minlength}.`
   )
@@ -60,7 +63,6 @@ export const maxLength: Validation = (def, input) => ({
     return !(def.maxlength && input.length > def.maxlength);
   },
   fail: () => new ValidationError(
-    def.key,
     `String must not exceed the maximum length.`,
     `The value '${input}' has ${input.length} characters but maximum for '${def.key}' is ${def.maxlength}.`
   )
@@ -74,9 +76,8 @@ export const mustBeBoolean: Validation = (def, input) => ({
     return true;
   },
   fail: () => new ValidationError(
-    def.key,
     `Value must be a boolean.`,
-    `The value '${input}' for '${def.key}' (${def.label}) is not a valid boolean. Accepted values: true, false, 'true', 'false'.`
+    `The value '${input}' for '${def.key}' is not a valid boolean. Accepted values: true, false, 'true', 'false'.`
   )
 });
 
@@ -89,9 +90,8 @@ export const mustBeNumber: Validation = (def, input) => ({
     );
   },
   fail: () => new ValidationError(
-    def.key,
     `Value must be a number.`,
-    `The value '${input}' for '${def.key}' (${def.label}) cannot be converted to a number.`
+    `The value '${input}' for '${def.key}' cannot be converted to a number.`
   )
 });
 
@@ -107,9 +107,8 @@ export const mustBeArray: Validation = (def, input) => ({
     return true;
   },
   fail: () => new ValidationError(
-    def.key,
     `Value must be an array.`,
-    `The value '${input}' for '${def.key}' (${def.label}) is not a valid JSON array.`
+    `The value '${input}' for '${def.key}' is not a valid JSON array.`
   )
 });
 
@@ -125,8 +124,7 @@ export const mustBeDatetime: Validation = (def, input) => ({
     );
   },
   fail: () => new ValidationError(
-    def.key,
     `Value must be a valid date or datetime.`,
-    `The value '${input}' for '${def.key}' (${def.label}) cannot be parsed as a valid date or datetime.`
+    `The value '${input}' for '${def.key}' cannot be parsed as a valid date or datetime.`
   )
 });

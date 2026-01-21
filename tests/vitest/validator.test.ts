@@ -5,7 +5,7 @@ import {
 import {
   _validateValueFollowDefinition,
   validate
-} from '../../src/pkg/system/validation/validator';
+} from '../../src/pkg/system/template/validator';
 import {
   createMockAttributeDefinitions,
   createMockEntity

@@ -7,10 +7,10 @@ const connectionString = `${process.env.DATABASE_URL}`;
 const adapter = new PrismaBetterSqlite3({ url: connectionString });
 const prisma = new PrismaClient({
   adapter,
-  log: ['query'],
+  // log: ['query'],
 });
 
-console.log(`Connected to database: ${connectionString}`);
+console.log(`📊 Connected to database: ${connectionString}`);
 
 export { prisma };
 export type TransactionPrismaClient = Omit<PrismaClient, ITXClientDenyList>;

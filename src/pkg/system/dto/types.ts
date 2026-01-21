@@ -9,20 +9,20 @@ import {
 } from '../../../../prisma/generated/client';
 import { AttributeGroupDefinitionCreateInput } from '../../../../prisma/generated/models';
 
+export type AttributeValueJoinAttributeDefinition = AttributeValue & {
+  attributeDefinition: AttributeDefinition;
+};
+
+export type AttributeGroupAssignmentJoinAttributeDefinition = AttributeGroupAssignment & {
+  attributeDefinition: AttributeDefinition;
+};
+
 export type SystemEntityJoinAttributes = SystemEntity & {
-  attributeValues: (
-    AttributeValue & {
-      attributeDefinition: AttributeDefinition;
-    }
-  )[];
+  attributeValues: AttributeValueJoinAttributeDefinition[];
 };
 
 export type AttributeGroupDefinitionJoinAssignments = AttributeGroupDefinition & {
-  attributeGroupAssignments: (
-    AttributeGroupAssignment & {
-      attributeDefinition: AttributeDefinition;
-    }
-  )[]
+  attributeGroupAssignments: AttributeGroupAssignmentJoinAttributeDefinition[]
 };
 
 export type AttributeGroupAssignmentCreateManyInput = {
@@ -31,25 +31,22 @@ export type AttributeGroupAssignmentCreateManyInput = {
   ordinal: number
 };
 
-export type AttributeValueJoinDefinition = AttributeValue & {
-  attributeDefinition: AttributeDefinition;
-};
-
 export type SystemEntityWithAttributeValues = SystemEntity & {
-  attributeValues: AttributeValueJoinDefinition[];
+  attributeValues: AttributeValueJoinAttributeDefinition[];
 };
 
 export type AttributeByTypeAndPrimary = AttributeValue & {
   attributeDefinition: AttributeDefinition;
   entity: SystemEntity & {
-    attributeValues: AttributeValueJoinDefinition[];
+    attributeValues: AttributeValueJoinAttributeDefinition[];
   };
 };
 
-export const NA_AttributeDefinition: AttributeDefinition = {
-  ID: -1,
-  key: '',
+export type NAAttributeDefinition = Omit<AttributeDefinition, 'ID' | 'createdAt' | 'updatedAt' | 'version'>;
+
+export const NAAttributeDefinitionRecord: NAAttributeDefinition = {
   label: '',
+  key: '',
   systemEntityType: SystemEntityType.NA,
   attributeValueType: AttributeValueType.NA,
   primary: false,

@@ -1,25 +1,15 @@
 import {
-  SystemEntityType,
-  AttributeValueType
+  SystemEntityType
 } from "../../../../prisma/generated/client";
-
-type AttributeValue = {
-  value: string | null
-  label: string
-  type: AttributeValueType
-  primary: boolean
-  required: boolean
-  unique: boolean
-  minlength: number | null
-  maxlength: number | null
-  ordinal: number
-}
+import { AttributeValue } from "../../../../prisma/generated/client";
 
 export type EntityDetail = {
   ID: number
   UUID: string
   systemEntityType: SystemEntityType
   attribute: Record<string, AttributeValue>
+  createdAt: Date
+  updatedAt: Date
 }
 
 type AttributeGroup = {
@@ -31,4 +21,10 @@ type AttributeGroup = {
 
 export type EntityOnForm = EntityDetail & {
   groups: AttributeGroup[]
+}
+
+type AttributeValueRecord = Record<string, any>
+
+export type EntityDetailAPIResponse = Omit<EntityDetail, 'attribute'> & {
+  attribute: AttributeValueRecord
 }

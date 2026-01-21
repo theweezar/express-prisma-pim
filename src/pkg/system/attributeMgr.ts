@@ -18,6 +18,7 @@ import {
   AttributeGroupDefinitionJoinAssignments,
   AttributeGroupDefinitionOptOrdinalCreateInput
 } from './dto/types';
+import { InternalServerError } from '../error/error';
 
 async function createAttributeDefinition(input: AttributeDefinitionCreateInput) {
   return await attributeDefinitionDTO.create(input);
@@ -27,12 +28,36 @@ async function createAttributeDefinitions(input: AttributeDefinitionCreateManyIn
   return await attributeDefinitionDTO.createManyAndReturn(input);
 }
 
+async function getAttributeValueByTypeAndPrimary(
+  type: SystemEntityType,
+  primaryValue: string
+) {
+  return await attributeValueDTO.getByTypeAndPrimary(type, primaryValue);
+}
+
+async function getAttributeValuesByTypeAndPrimary(
+  type: SystemEntityType,
+  primaryValues: string[]
+) {
+  return await attributeValueDTO.getManyByTypeAndPrimary(type, primaryValues);
+}
+
 async function getAttributeDefinitionByID(id: number) {
   return await attributeDefinitionDTO.getByID(id);
 }
 
 async function getAttributeDefinitionsByEntityType(type: SystemEntityType) {
-  return await attributeValueDTO.getAttributeDefinitions(type);
+  return await attributeDefinitionDTO.getByType(type);
+}
+
+async function getPrimaryAttributeDefinitionByEntityType(type: SystemEntityType) {
+  return await attributeDefinitionDTO.getPrimaryByType(type);
+}
+
+async function getPrimaryAttributeDefinitionByEntityTypeOrFail(type: SystemEntityType) {
+  const def = await attributeDefinitionDTO.getPrimaryByType(type);
+  if (!def) throw new InternalServerError(`Type ${type} primary definition not found.`);
+  return def;
 }
 
 async function updateAttributeDefinition(def: AttributeDefinition, updates: Partial<AttributeDefinitionCreateInput>) {
@@ -94,14 +119,14 @@ async function createAttributeGroupAssignments(
 async function assignAttributeToGroup(
   type: SystemEntityType,
   groupID: string,
-  attributeID: string
+  attributeID: number | string
 ) {
   const group = await attributeGroupDefinitionDTO.getGroupJoinAssignmentsByID(type, groupID);
   if (!group) {
     throw new Error(`Attribute group with ID ${groupID} not found`);
   }
 
-  const attribute = await attributeValueDTO.getAttributeDefinition(type, attributeID);
+  const attribute = await getAttributeDefinitionByID(Number(attributeID));
   if (!attribute) {
     throw new Error(`Attribute definition with ID ${attributeID} not found`);
   }
@@ -114,14 +139,14 @@ async function assignAttributeToGroup(
 async function unassignAttributeFromGroup(
   type: SystemEntityType,
   groupID: string,
-  attributeID: string
+  attributeID: number | string
 ) {
   const group = await attributeGroupDefinitionDTO.getGroupJoinAssignmentsByID(type, groupID);
   if (!group) {
     throw new Error(`Attribute group with ID ${groupID} not found`);
   }
 
-  const attribute = await attributeValueDTO.getAttributeDefinition(type, attributeID);
+  const attribute = await getAttributeDefinitionByID(Number(attributeID));
   if (!attribute) {
     throw new Error(`Attribute definition with ID ${attributeID} not found`);
   }
@@ -156,21 +181,29 @@ async function getGroupsJoinAssignmentsByEntityType(
 export default {
   createAttributeDefinition,
   createAttributeDefinitions,
-  getAttributeDefinitionByID,
-  getAttributeDefinitionsByEntityType,
-  updateAttributeDefinition,
-  deleteAttributeDefinition,
   createAttributeGroupDefinition,
   createAttributeGroupDefinitions,
-  getAttributeGroupByID,
-  updateAttributeGroup,
-  deleteAttributeGroup,
   createAttributeGroupAssignment,
   createAttributeGroupAssignments,
+
+  getAttributeValueByTypeAndPrimary,
+  getAttributeValuesByTypeAndPrimary,
+  getAttributeDefinitionByID,
+  getAttributeDefinitionsByEntityType,
+  getAttributeGroupByID,
   getAttributeGroupAssignmentByID,
-  deleteAttributeGroupAssignment,
-  assignAttributeToGroup,
-  unassignAttributeFromGroup,
+  getPrimaryAttributeDefinitionByEntityType,
+  getPrimaryAttributeDefinitionByEntityTypeOrFail,
   getGroupsByEntityType,
   getGroupsJoinAssignmentsByEntityType,
+
+  updateAttributeGroup,
+  updateAttributeDefinition,
+
+  deleteAttributeGroup,
+  deleteAttributeDefinition,
+  deleteAttributeGroupAssignment,
+
+  assignAttributeToGroup,
+  unassignAttributeFromGroup,
 };

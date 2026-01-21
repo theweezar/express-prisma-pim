@@ -2,7 +2,10 @@
 CREATE TABLE "SystemEntity" (
     "ID" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "UUID" TEXT NOT NULL,
-    "systemEntityType" TEXT NOT NULL
+    "systemEntityType" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "version" INTEGER NOT NULL DEFAULT 1
 );
 
 -- CreateTable
@@ -16,7 +19,10 @@ CREATE TABLE "AttributeDefinition" (
     "required" BOOLEAN NOT NULL DEFAULT false,
     "unique" BOOLEAN NOT NULL DEFAULT false,
     "minlength" INTEGER,
-    "maxlength" INTEGER
+    "maxlength" INTEGER,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "version" INTEGER NOT NULL DEFAULT 1
 );
 
 -- CreateTable
@@ -25,7 +31,10 @@ CREATE TABLE "AttributeGroupDefinition" (
     "key" TEXT NOT NULL,
     "label" TEXT NOT NULL,
     "systemEntityType" TEXT NOT NULL,
-    "ordinal" INTEGER NOT NULL
+    "ordinal" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "version" INTEGER NOT NULL DEFAULT 1
 );
 
 -- CreateTable

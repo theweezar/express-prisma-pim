@@ -5,6 +5,7 @@ import attributeDefinitionRoutes from './api/routes/attributeDefinitionRoutes';
 import attributeGroupRoutes from './api/routes/attributeGroupRoutes';
 import attributeGroupAssignmentRoutes from './api/routes/attributeGroupAssignmentRoutes';
 import errorHandler from './api/middleware/errorHandler';
+import { HandlerNotFoundError } from './pkg/error/error';
 
 const app = express()
 
@@ -16,14 +17,15 @@ app.get(`/health`, (req, res) => {
 })
 
 // API Routes
-app.use('/entities', systemEntityRoutes);
+app.use('/entities/:type', systemEntityRoutes);
 // app.use('/attribute-definitions', attributeDefinitionRoutes);
 // app.use('/attribute-groups', attributeGroupRoutes);
 // app.use('/attribute-group-assignments', attributeGroupAssignmentRoutes);
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ error: 'Not Found' });
+  const error = new HandlerNotFoundError(`${req.path} not found`);
+  res.status(error.getStatusCode()).json({ error: error.toJSON() });
 });
 
 // Error handler (must be last)

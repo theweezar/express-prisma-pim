@@ -30,6 +30,9 @@ model SystemEntity {
   UUID             String           @unique @default(uuid())
   systemEntityType SystemEntityType
   attributeValues  AttributeValue[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  version          Int              @default(1)
 }
 
 model AttributeDefinition {
@@ -45,6 +48,9 @@ model AttributeDefinition {
   maxlength                 Int?
   attributeValues           AttributeValue[]
   attributeGroupAssignments AttributeGroupAssignment[]
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  version                   Int                        @default(1)
 
   @@unique([systemEntityType, key])
 }
@@ -56,6 +62,9 @@ model AttributeGroupDefinition {
   systemEntityType          SystemEntityType
   attributeGroupAssignments AttributeGroupAssignment[]
   ordinal                   Int
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  version                   Int                        @default(1)
 
   @@unique([systemEntityType, key])
 }

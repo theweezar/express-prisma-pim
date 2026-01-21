@@ -83,38 +83,7 @@ async function main() {
   await deleteAllTables();
   await createAllAttributeDefinition();
 
-  // await systemEntityMgr.createSystemEntity(
-  //   SystemEntityType.PRODUCT,
-  //   new Map([
-  //     ['productID', 'basic-0001'],
-  //     ['productName', 'Basic Outfit'],
-  //     ['active', 'true']
-  //   ])
-  // )
-
-  // await systemEntityMgr.createSystemEntity(
-  //   SystemEntityType.PRODUCT,
-  //   new Map([
-  //     ['productID', 'tech-sling-099'],
-  //     ['productName', 'Pro-Travel Sling Bag'],
-  //     ['material', '70% NYLON + 30% POLYESTER'],
-  //     ['dimensionHeight', '27.0'],
-  //     ['dimensionWidth', '18.0'],
-  //     ['dimensionLength', '6.5'],
-  //     ['weight', '0.32'],
-  //     ['active', 'true'],
-  //   ])
-  // )
-
-  // await systemEntityMgr.createSystemEntity(
-  //   SystemEntityType.PRODUCT,
-  //   new Map([
-  //     ['productID', 'cargo-pants-v2'],
-  //     ['productName', 'Utility Cargo Pants'],
-  //     ['ean', '8801234567890'],
-  //     ['active', 'false']
-  //   ])
-  // );
+  
 
   // await SystemEntityMgr.deleteSystemEntityByPrimary(SystemEntityType.PRODUCT, 'basic-2039')
 

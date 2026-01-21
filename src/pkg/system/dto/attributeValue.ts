@@ -11,29 +11,7 @@ import {
   AttributeValueCreateManyInput
 } from '../../../../prisma/generated/models';
 
-async function getAttributeDefinitions(
-  type: SystemEntityType
-) {
-  return await prisma.attributeDefinition.findMany({
-    where: {
-      systemEntityType: type
-    }
-  });
-}
-
-async function getAttributeDefinition(
-  type: SystemEntityType,
-  ID: number | string
-): Promise<AttributeDefinition | null> {
-  return await prisma.attributeDefinition.findUnique({
-    where: {
-      ID: Number(ID),
-      systemEntityType: type
-    }
-  });
-}
-
-async function getAttributeByTypeAndPrimary(
+async function getByTypeAndPrimary(
   type: SystemEntityType,
   primaryValue: string
 ) {
@@ -46,16 +24,24 @@ async function getAttributeByTypeAndPrimary(
         primary: true
       },
       value: primaryValue
-    },
-    include: {
+    }
+  });
+}
+
+async function getManyByTypeAndPrimary(
+  type: SystemEntityType,
+  primaryValues: string[]
+) {
+  return await prisma.attributeValue.findMany({
+    where: {
       entity: {
-        include: {
-          attributeValues: {
-            include: {
-              attributeDefinition: true
-            }
-          }
-        }
+        systemEntityType: type
+      },
+      attributeDefinition: {
+        primary: true
+      },
+      value: {
+        in: primaryValues
       }
     }
   });
@@ -106,9 +92,8 @@ async function deleteMany(
 }
 
 export default {
-  getAttributeDefinitions,
-  getAttributeDefinition,
-  getAttributeByTypeAndPrimary,
+  getByTypeAndPrimary,
+  getManyByTypeAndPrimary,
   createMany: async (
     data: AttributeValueCreateManyInput[]
   ) => {

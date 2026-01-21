@@ -2,23 +2,56 @@ import { DTOPrismaClient, prisma } from '../../../../prisma/connection';
 import {
   AttributeDefinitionCreateInput,
 } from '../../../../prisma/generated/models';
-import { AttributeDefinition } from '../../../../prisma/generated/client';
+import { AttributeDefinition, SystemEntityType } from '../../../../prisma/generated/client';
+
+async function getByType(
+  type: SystemEntityType
+) {
+  return await prisma.attributeDefinition.findMany({
+    where: {
+      systemEntityType: type
+    },
+  });
+}
 
 async function getByID(
-  pc: DTOPrismaClient,
   ID: number
 ) {
-  return await pc.attributeDefinition.findUnique({
+  return await prisma.attributeDefinition.findUnique({
     where: { ID },
   });
 }
 
 async function getByKey(
-  pc: DTOPrismaClient,
   key: string
 ) {
-  return await pc.attributeDefinition.findFirst({
+  return await prisma.attributeDefinition.findFirst({
     where: { key },
+  });
+}
+
+async function getByTypeAndKey(
+  type: SystemEntityType,
+  key: string
+) {
+  return await prisma.attributeDefinition.findUnique({
+    where: {
+      systemEntityType_key: {
+        systemEntityType: type,
+        key: key
+      }
+    },
+  });
+}
+
+async function getPrimaryByType(
+  type: SystemEntityType,
+) {
+  return await prisma.attributeDefinition.findFirst({
+    where: {
+      systemEntityType: type,
+      primary: true
+    },
   });
 }
 
@@ -70,12 +103,11 @@ async function remove(
 }
 
 export default {
-  getByID: async (ID: number) => {
-    return await getByID(prisma, ID);
-  },
-  getByKey: async (key: string) => {
-    return await getByKey(prisma, key);
-  },
+  getByType,
+  getByID,
+  getByKey,
+  getByTypeAndKey,
+  getPrimaryByType,
   create: async (input: AttributeDefinitionCreateInput) => {
     return await create(prisma, input);
   },
@@ -93,12 +125,6 @@ export default {
   },
   wrapTx: (tx: DTOPrismaClient) => {
     return {
-      getByID: async (ID: number) => {
-        return await getByID(tx, ID);
-      },
-      getByKey: async (key: string) => {
-        return await getByKey(tx, key);
-      },
       create: async (input: AttributeDefinitionCreateInput) => {
         return await create(tx, input);
       },
